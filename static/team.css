@@ -1,0 +1,40 @@
+/* Team entry and practice catalogue share the cabinet's blue visual system. */
+.login-screen { min-height:100dvh; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:20px; background:var(--bg); }
+.login-story { display:flex; flex-direction:column; min-width:0; padding:38px 46px 30px; border-radius:20px; background:var(--accent); color:white; }
+.login-story-top { font-size:19px; font-weight:600; letter-spacing:-.025em; }
+.login-story-top span { display:block; font-size:12px; font-weight:400; letter-spacing:0; margin-top:7px; color:#e2ebff; }
+.login-illustration { width:min(100%,390px); margin:45px auto 20px; }
+.login-illustration svg { display:block; width:100%; height:auto; }
+.login-story h2 { font-size:38px; line-height:1.14; letter-spacing:-.035em; font-weight:600; }
+.login-story > p { margin-top:16px; font-size:14px; line-height:1.6; color:#e2ebff; max-width:45ch; }
+.login-story-bottom { display:flex; justify-content:space-between; gap:16px; margin-top:auto; padding-top:45px; font-size:11px; color:#e2ebff; }
+.login-form-side { display:grid; place-items:center; padding:38px; min-width:0; }
+.login-card { width:min(100%,390px); }
+.login-card .brand { margin-bottom:59px; font-size:21px; }
+.login-card .brand-mark, .login-card .brand-mark svg { width:42px; height:42px; }
+.login-card .brand-plus { font-size:15px; }
+.login-kicker { color:var(--accent); font-size:13px; margin-bottom:12px; }
+.login-card h1 { font-size:35px; margin-bottom:13px; }
+.login-card > .muted { font-size:14px; max-width:45ch; }
+.login-card form { margin-top:30px; display:grid; gap:20px; }
+.login-card input { min-height:49px; font-size:14px; }
+.login-card form .button { width:100%; min-height:49px; font-size:14px; justify-content:space-between; padding-inline:18px; margin-top:2px; }
+.login-card > .micro { margin-top:27px; font-size:12px; max-width:48ch; }
+.login-error { color:var(--danger); background:var(--danger-bg); padding:12px; border-radius:8px; font-size:13px; }
+.topbar-session { display:flex; align-items:center; justify-content:flex-end; gap:13px; flex-wrap:wrap; }
+.topbar-session #session-user { font-size:11px; }
+.topbar-session #logout-button { color:var(--muted); }
+[hidden] { display:none !important; }
+.examples-modal { max-width:920px; width:calc(100% - 32px); }
+.examples-modal > .muted { font-size:13px; margin-bottom:25px; max-width:75ch; }
+.example-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.example-card { display:flex; flex-direction:column; gap:12px; padding:21px; border:1px solid var(--border); border-radius:12px; background:var(--bg); }
+.example-card h3 { font-size:16px; line-height:1.4; }
+.example-card p { font-size:12px; line-height:1.65; color:var(--muted); }
+.example-card .micro { font-size:11px; }
+.example-card .button { align-self:flex-start; margin-top:auto; }
+#toggle-legacy { margin:4px 36px 0; font-size:11px; }
+@media (min-width:1500px) { .login-screen { padding:32px; } .login-story { padding:46px 60px 38px; } .login-illustration { margin-top:60px; width:420px; } }
+@media (max-width:1000px) { .login-story { padding:32px; } .login-story h2 { font-size:32px; } .login-form-side { padding:30px; } .login-card h1 { font-size:30px; } .login-illustration { margin-top:42px; } }
+@media (max-width:760px) { .login-screen { grid-template-columns:1fr; padding:24px; } .login-story { display:none; } .login-form-side { padding:28px 12px; min-height:calc(100dvh - 48px); } .login-card { width:min(100%,420px); } .login-card .brand { margin-bottom:54px; } .topbar-session { gap:10px; } }
+@media (max-width:540px) { .login-screen { padding:16px; } .login-form-side { padding:30px 10px; min-height:calc(100dvh - 32px); } .login-card h1 { font-size:32px; } .topbar-session { gap:8px; } .topbar-session #session-user { display:none; } .topbar-session .badge { font-size:10px; } .example-cards { grid-template-columns:1fr; } .example-card { padding:18px; } #toggle-legacy { margin-inline:16px; } }

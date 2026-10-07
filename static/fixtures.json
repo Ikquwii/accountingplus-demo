@@ -1,0 +1,1833 @@
+{
+  "originals": {
+    "demo-000003": {
+      "filename": "clean-marketplace.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nS-001,sale,2026-09-10,100000.00,2026-09-10,PAY-SEP-01,,Вымышленная продажа; налоговая дата задана для примера,,\nC-001,commission,2026-09-20,10000.00,,PAY-SEP-01,,\"Комиссия, не уменьшает базу УСН Доходы\",,\nL-001,logistics,2026-09-20,5000.00,,PAY-SEP-01,,Логистика,,\nP-001,payout,2026-09-25,85000.00,,PAY-SEP-01,,Вымышленное поручение на выплату,,\n"
+    },
+    "demo-000009": {
+      "filename": "clean-bank.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nB-001,bank_credit,2026-09-25,85000.00,,PAY-SEP-01,,Вымышленное поступление WB,,\n"
+    },
+    "demo-000016": {
+      "filename": "returns-marketplace.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nS-001,sale,2026-09-10,248500.00,2026-09-10,PAY-SEP-01,,Вымышленная продажа; налоговая дата задана для примера,,\nC-001,commission,2026-09-20,32000.00,,PAY-SEP-01,,\"Комиссия, не уменьшает базу УСН Доходы\",,\nL-001,logistics,2026-09-20,9700.00,,PAY-SEP-01,,Логистика,,\nP-001,payout,2026-09-25,188300.00,,PAY-SEP-01,,Вымышленное поручение на выплату,,\nR-001,return,2026-09-15,18500.00,2026-09-15,PAY-SEP-01,S-001,Вымышленный возврат части продажи,,\n"
+    },
+    "demo-000023": {
+      "filename": "returns-bank.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nB-001,bank_credit,2026-09-25,188300.00,,PAY-SEP-01,,Вымышленное поступление Ozon,,\n"
+    },
+    "demo-000030": {
+      "filename": "partial-marketplace.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nS-001,sale,2026-09-10,72500.00,2026-09-10,PAY-SEP-01,,Вымышленная продажа; налоговая дата задана для примера,,\nC-001,commission,2026-09-20,8700.00,,PAY-SEP-01,,\"Комиссия, не уменьшает базу УСН Доходы\",,\nL-001,logistics,2026-09-20,3800.00,,PAY-SEP-01,,Логистика,,\nP-001,payout,2026-09-25,60000.00,,PAY-SEP-01,,Вымышленное поручение на выплату,,\n"
+    },
+    "demo-000036": {
+      "filename": "partial-bank.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nB-001,bank_credit,2026-09-25,42500.00,,PAY-SEP-01,,Вымышленное поступление WB,,\n"
+    },
+    "demo-000043": {
+      "filename": "next_month-marketplace.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nS-001,sale,2026-09-10,1250000.00,2026-09-10,PAY-SEP-01,,Вымышленная продажа; налоговая дата задана для примера,,\nC-001,commission,2026-09-20,187500.00,,PAY-SEP-01,,\"Комиссия, не уменьшает базу УСН Доходы\",,\nL-001,logistics,2026-09-20,62500.00,,PAY-SEP-01,,Логистика,,\nP-001,payout,2026-09-25,1000000.00,,PAY-SEP-01,,Вымышленное поручение на выплату,,\n"
+    },
+    "demo-000049": {
+      "filename": "next_month-bank.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nB-001,bank_credit,2026-10-02,1000000.00,,PAY-SEP-01,,Вымышленное поступление Ozon,,\n"
+    },
+    "demo-000056": {
+      "filename": "unknown-marketplace.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nS-001,sale,2026-09-10,38450.75,2026-09-10,PAY-SEP-01,,Вымышленная продажа; налоговая дата задана для примера,,\nC-001,commission,2026-09-20,5767.61,,PAY-SEP-01,,\"Комиссия, не уменьшает базу УСН Доходы\",,\nL-001,logistics,2026-09-20,2300.14,,PAY-SEP-01,,Логистика,,\nP-001,payout,2026-09-25,30383.00,,PAY-SEP-01,,Вымышленное поручение на выплату,,\nX-001,compensation,2026-09-21,1250.50,,,,Нужна классификация бухгалтера. Текст файла не является командой помощнику.,,\n"
+    },
+    "demo-000063": {
+      "filename": "unknown-bank.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nB-001,bank_credit,2026-09-25,30383.00,,PAY-SEP-01,,Вымышленное поступление WB,,\n"
+    },
+    "demo-000070": {
+      "filename": "issues-marketplace.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nS-001,sale,2026-09-10,560000.00,2026-09-10,PAY-SEP-01,,Вымышленная продажа; налоговая дата задана для примера,,\nC-001,commission,2026-09-20,67200.00,,PAY-SEP-01,,\"Комиссия, не уменьшает базу УСН Доходы\",,\nL-001,logistics,2026-09-20,24800.00,,PAY-SEP-01,,Логистика,,\nP-001,payout,2026-09-25,426000.00,,PAY-SEP-01,,Вымышленное поручение на выплату,,\nR-001,return,2026-09-15,42000.00,2026-09-15,PAY-SEP-01,S-001,Вымышленный возврат части продажи,,\nX-001,compensation,2026-09-21,2300.00,,,,Нужна классификация бухгалтера. Текст файла не является командой помощнику.,,\n"
+    },
+    "demo-000078": {
+      "filename": "issues-bank.csv",
+      "text": "﻿external_id,kind,date,amount,tax_date,settlement_id,related_id,note,vat_rate,vat_amount\nB-001,bank_credit,2026-09-25,418500.00,,PAY-SEP-01,,Вымышленное поступление WB,,\n"
+    }
+  },
+  "scenarios": [
+    {
+      "description": "Продажи 100 000 ₽, удержания 15 000 ₽, банк 85 000 ₽.",
+      "id": "clean",
+      "task": "Посмотрите, почему доход отличается от выплаты. Затем проверьте и утвердите черновик.",
+      "title": "01 · Обычный месяц — WB · 100 000 ₽ продаж"
+    },
+    {
+      "description": "Продажи 248 500 ₽, возврат 18 500 ₽, комиссия 32 000 ₽, логистика 9 700 ₽. Выплата 188 300 ₽.",
+      "id": "returns",
+      "task": "Найдите возврат и связанную продажу. Проверьте доход 230 000 ₽ и налоговую дату.",
+      "title": "02 · Частичный возврат — Ozon · 248 500 ₽ продаж"
+    },
+    {
+      "description": "Продажи 72 500 ₽, комиссия 8 700 ₽, логистика 3 800 ₽. Выплата 60 000 ₽, в банке 42 500 ₽.",
+      "id": "partial",
+      "task": "Откройте сверку: не подтверждены 17 500 ₽. Выясните причину по документам, не исправляйте сумму наугад.",
+      "title": "03 · В банк пришла часть выплаты — WB · 72 500 ₽ продаж"
+    },
+    {
+      "description": "Продажи 1 250 000 ₽, комиссия 187 500 ₽, логистика 62 500 ₽. Выплата 1 000 000 ₽ поступила 2 октября.",
+      "id": "next_month",
+      "task": "Откройте сверку и сравните даты. Посмотрите, как показано поступление за пределами выбранного месяца.",
+      "title": "04 · Деньги пришли в октябре — Ozon · 1 250 000 ₽ продаж"
+    },
+    {
+      "description": "Продажи 38 450,75 ₽, комиссия 5 767,61 ₽, логистика 2 300,14 ₽. Банк 30 383 ₽; неизвестная компенсация 1 250,50 ₽.",
+      "id": "unknown",
+      "task": "Найдите вопрос и исходную строку. Запросите основание компенсации перед классификацией; черновик пока блокируется.",
+      "title": "05 · Неизвестная компенсация — WB · 38 450,75 ₽ продаж"
+    },
+    {
+      "description": "Продажи 560 000 ₽, возврат 42 000 ₽, комиссия 67 200 ₽, логистика 24 800 ₽. Выплата 426 000 ₽, банк 418 500 ₽; компенсация 2 300 ₽ и неполный профиль.",
+      "id": "issues",
+      "task": "Начните с раздела «Проверка». По очереди выясните вопросы и после исправлений пересчитайте период.",
+      "title": "06 · Несколько вопросов сразу — WB · 560 000 ₽ продаж"
+    }
+  ],
+  "schema": 1,
+  "workspaces": [
+    {
+      "client": {
+        "_data_revision": 2,
+        "id": "demo-000001",
+        "income_data_complete": true,
+        "inn": "",
+        "marketplace": "wb",
+        "name": "01 · Обычный месяц — WB · 100 000 ₽ продаж",
+        "opening_balance": "0.00",
+        "period": "2026-09",
+        "prior_year_income": "0.00",
+        "region": "Учебный регион",
+        "usn_rate": "6.00",
+        "vat_effective_from": "2026-01-01",
+        "vat_status": "exempt",
+        "ytd_income_before_period": "0.00"
+      },
+      "data_revision": 2,
+      "events": [
+        {
+          "active": true,
+          "amount": "100000.00",
+          "client_id": "demo-000001",
+          "date": "2026-09-10",
+          "external_id": "S-001",
+          "extra_fields": {},
+          "file_id": "demo-000003",
+          "id": "demo-000004",
+          "kind": "sale",
+          "line": 2,
+          "note": "Вымышленная продажа; налоговая дата задана для примера",
+          "original_kind": "sale",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-10",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "10000.00",
+          "client_id": "demo-000001",
+          "date": "2026-09-20",
+          "external_id": "C-001",
+          "extra_fields": {},
+          "file_id": "demo-000003",
+          "id": "demo-000005",
+          "kind": "commission",
+          "line": 3,
+          "note": "Комиссия, не уменьшает базу УСН Доходы",
+          "original_kind": "commission",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "5000.00",
+          "client_id": "demo-000001",
+          "date": "2026-09-20",
+          "external_id": "L-001",
+          "extra_fields": {},
+          "file_id": "demo-000003",
+          "id": "demo-000006",
+          "kind": "logistics",
+          "line": 4,
+          "note": "Логистика",
+          "original_kind": "logistics",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "85000.00",
+          "client_id": "demo-000001",
+          "date": "2026-09-25",
+          "external_id": "P-001",
+          "extra_fields": {},
+          "file_id": "demo-000003",
+          "id": "demo-000007",
+          "kind": "payout",
+          "line": 5,
+          "note": "Вымышленное поручение на выплату",
+          "original_kind": "payout",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "85000.00",
+          "client_id": "demo-000001",
+          "date": "2026-09-25",
+          "external_id": "B-001",
+          "extra_fields": {},
+          "file_id": "demo-000009",
+          "id": "demo-000010",
+          "kind": "bank_credit",
+          "line": 2,
+          "note": "Вымышленное поступление WB",
+          "original_kind": "bank_credit",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "bank",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        }
+      ],
+      "files": [
+        {
+          "client_id": "demo-000001",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "clean-bank.csv",
+          "id": "demo-000009",
+          "replaces_file_id": null,
+          "row_count": 1,
+          "sha256": "a84bbb104d40a3cce0c1206838c7962bdd65eeb5a2a5c2107d6d2f710a879fec",
+          "source": "bank",
+          "status": "imported"
+        },
+        {
+          "client_id": "demo-000001",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "clean-marketplace.csv",
+          "id": "demo-000003",
+          "replaces_file_id": null,
+          "row_count": 4,
+          "sha256": "e8fef54b931285ee689307372d4da49681a1f5acbfe7dad9e2dc9db179a4ba70",
+          "source": "marketplace",
+          "status": "imported"
+        }
+      ],
+      "history": [
+        {
+          "action": "result_calculated",
+          "actor_username": null,
+          "client_id": "demo-000001",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Рассчитан период 2026-09, версия 1, правила 2026.1.",
+          "id": "demo-000013",
+          "result_id": "demo-000012",
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000001",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл clean-bank.csv: строк 1, новых операций 1.",
+          "id": "demo-000011",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000001",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл clean-marketplace.csv: строк 4, новых операций 4.",
+          "id": "demo-000008",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "client_created",
+          "actor_username": null,
+          "client_id": "demo-000001",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Создан профиль клиента.",
+          "id": "demo-000002",
+          "result_id": null,
+          "reviewer": null
+        }
+      ],
+      "result": {
+        "client_id": "demo-000001",
+        "created_at": "2026-09-30T12:00:00+00:00",
+        "explanation": "Доход УСН за 2026-09: 100000.00 ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: 6000.00 ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: 0. Каждая сумма прослеживается до строк исходных файлов.",
+        "id": "demo-000012",
+        "income_rows": [
+          {
+            "amount": "100000.00",
+            "event_id": "demo-000004",
+            "external_id": "S-001",
+            "kind": "sale",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "S-001",
+                "file_id": "demo-000003",
+                "line": 2
+              }
+            ],
+            "tax_date": "2026-09-10"
+          }
+        ],
+        "issues": [
+          {
+            "code": "tax_preliminary",
+            "event_ids": [],
+            "message": "Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.",
+            "severity": "warning",
+            "sources": []
+          }
+        ],
+        "metrics": {
+          "bank_received": "85000.00",
+          "closing_balance": "0.00",
+          "commission": "10000.00",
+          "declared_payouts": "85000.00",
+          "expected_payout": "85000.00",
+          "logistics": "5000.00",
+          "payout_difference": "0.00",
+          "returns": "0.00",
+          "sales": "100000.00",
+          "usn_income": "100000.00",
+          "usn_tax_preliminary": "6000.00",
+          "withholding": "0.00"
+        },
+        "period": "2026-09",
+        "reconciliation": [
+          {
+            "bank_event_ids": [
+              "demo-000010"
+            ],
+            "difference": "0.00",
+            "expected": "85000.00",
+            "payout_event_ids": [
+              "demo-000007"
+            ],
+            "received": "85000.00",
+            "settlement_id": "PAY-SEP-01",
+            "status": "matched"
+          }
+        ],
+        "reviewer": null,
+        "rules_version": "2026.1",
+        "status": "calculated",
+        "version": 1
+      }
+    },
+    {
+      "client": {
+        "_data_revision": 2,
+        "id": "demo-000014",
+        "income_data_complete": true,
+        "inn": "",
+        "marketplace": "ozon",
+        "name": "02 · Частичный возврат — Ozon · 248 500 ₽ продаж",
+        "opening_balance": "0.00",
+        "period": "2026-09",
+        "prior_year_income": "0.00",
+        "region": "Учебный регион",
+        "usn_rate": "6.00",
+        "vat_effective_from": "2026-01-01",
+        "vat_status": "exempt",
+        "ytd_income_before_period": "0.00"
+      },
+      "data_revision": 2,
+      "events": [
+        {
+          "active": true,
+          "amount": "248500.00",
+          "client_id": "demo-000014",
+          "date": "2026-09-10",
+          "external_id": "S-001",
+          "extra_fields": {},
+          "file_id": "demo-000016",
+          "id": "demo-000017",
+          "kind": "sale",
+          "line": 2,
+          "note": "Вымышленная продажа; налоговая дата задана для примера",
+          "original_kind": "sale",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-10",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "32000.00",
+          "client_id": "demo-000014",
+          "date": "2026-09-20",
+          "external_id": "C-001",
+          "extra_fields": {},
+          "file_id": "demo-000016",
+          "id": "demo-000018",
+          "kind": "commission",
+          "line": 3,
+          "note": "Комиссия, не уменьшает базу УСН Доходы",
+          "original_kind": "commission",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "9700.00",
+          "client_id": "demo-000014",
+          "date": "2026-09-20",
+          "external_id": "L-001",
+          "extra_fields": {},
+          "file_id": "demo-000016",
+          "id": "demo-000019",
+          "kind": "logistics",
+          "line": 4,
+          "note": "Логистика",
+          "original_kind": "logistics",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "188300.00",
+          "client_id": "demo-000014",
+          "date": "2026-09-25",
+          "external_id": "P-001",
+          "extra_fields": {},
+          "file_id": "demo-000016",
+          "id": "demo-000020",
+          "kind": "payout",
+          "line": 5,
+          "note": "Вымышленное поручение на выплату",
+          "original_kind": "payout",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "18500.00",
+          "client_id": "demo-000014",
+          "date": "2026-09-15",
+          "external_id": "R-001",
+          "extra_fields": {},
+          "file_id": "demo-000016",
+          "id": "demo-000021",
+          "kind": "return",
+          "line": 6,
+          "note": "Вымышленный возврат части продажи",
+          "original_kind": "return",
+          "related_id": "S-001",
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-15",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "188300.00",
+          "client_id": "demo-000014",
+          "date": "2026-09-25",
+          "external_id": "B-001",
+          "extra_fields": {},
+          "file_id": "demo-000023",
+          "id": "demo-000024",
+          "kind": "bank_credit",
+          "line": 2,
+          "note": "Вымышленное поступление Ozon",
+          "original_kind": "bank_credit",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "bank",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        }
+      ],
+      "files": [
+        {
+          "client_id": "demo-000014",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "returns-bank.csv",
+          "id": "demo-000023",
+          "replaces_file_id": null,
+          "row_count": 1,
+          "sha256": "a62706bf573ad52773bcc16ce1e76f40dd309d2f860842e62959208fbca478ff",
+          "source": "bank",
+          "status": "imported"
+        },
+        {
+          "client_id": "demo-000014",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "returns-marketplace.csv",
+          "id": "demo-000016",
+          "replaces_file_id": null,
+          "row_count": 5,
+          "sha256": "8684bf79da6a53f1a3c70fc89b7190fa5a0cb46cce2745fcb3431da3b3cf1a48",
+          "source": "marketplace",
+          "status": "imported"
+        }
+      ],
+      "history": [
+        {
+          "action": "result_calculated",
+          "actor_username": null,
+          "client_id": "demo-000014",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Рассчитан период 2026-09, версия 1, правила 2026.1.",
+          "id": "demo-000027",
+          "result_id": "demo-000026",
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000014",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл returns-bank.csv: строк 1, новых операций 1.",
+          "id": "demo-000025",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000014",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл returns-marketplace.csv: строк 5, новых операций 5.",
+          "id": "demo-000022",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "client_created",
+          "actor_username": null,
+          "client_id": "demo-000014",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Создан профиль клиента.",
+          "id": "demo-000015",
+          "result_id": null,
+          "reviewer": null
+        }
+      ],
+      "result": {
+        "client_id": "demo-000014",
+        "created_at": "2026-09-30T12:00:00+00:00",
+        "explanation": "Доход УСН за 2026-09: 230000.00 ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: 13800.00 ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: 0. Каждая сумма прослеживается до строк исходных файлов.",
+        "id": "demo-000026",
+        "income_rows": [
+          {
+            "amount": "248500.00",
+            "event_id": "demo-000017",
+            "external_id": "S-001",
+            "kind": "sale",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "S-001",
+                "file_id": "demo-000016",
+                "line": 2
+              }
+            ],
+            "tax_date": "2026-09-10"
+          },
+          {
+            "amount": "-18500.00",
+            "event_id": "demo-000021",
+            "external_id": "R-001",
+            "kind": "return",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "R-001",
+                "file_id": "demo-000016",
+                "line": 6
+              }
+            ],
+            "tax_date": "2026-09-15"
+          }
+        ],
+        "issues": [
+          {
+            "code": "tax_preliminary",
+            "event_ids": [],
+            "message": "Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.",
+            "severity": "warning",
+            "sources": []
+          }
+        ],
+        "metrics": {
+          "bank_received": "188300.00",
+          "closing_balance": "0.00",
+          "commission": "32000.00",
+          "declared_payouts": "188300.00",
+          "expected_payout": "188300.00",
+          "logistics": "9700.00",
+          "payout_difference": "0.00",
+          "returns": "18500.00",
+          "sales": "248500.00",
+          "usn_income": "230000.00",
+          "usn_tax_preliminary": "13800.00",
+          "withholding": "0.00"
+        },
+        "period": "2026-09",
+        "reconciliation": [
+          {
+            "bank_event_ids": [
+              "demo-000024"
+            ],
+            "difference": "0.00",
+            "expected": "188300.00",
+            "payout_event_ids": [
+              "demo-000020"
+            ],
+            "received": "188300.00",
+            "settlement_id": "PAY-SEP-01",
+            "status": "matched"
+          }
+        ],
+        "reviewer": null,
+        "rules_version": "2026.1",
+        "status": "calculated",
+        "version": 1
+      }
+    },
+    {
+      "client": {
+        "_data_revision": 2,
+        "id": "demo-000028",
+        "income_data_complete": true,
+        "inn": "",
+        "marketplace": "wb",
+        "name": "03 · В банк пришла часть выплаты — WB · 72 500 ₽ продаж",
+        "opening_balance": "0.00",
+        "period": "2026-09",
+        "prior_year_income": "0.00",
+        "region": "Учебный регион",
+        "usn_rate": "6.00",
+        "vat_effective_from": "2026-01-01",
+        "vat_status": "exempt",
+        "ytd_income_before_period": "0.00"
+      },
+      "data_revision": 2,
+      "events": [
+        {
+          "active": true,
+          "amount": "72500.00",
+          "client_id": "demo-000028",
+          "date": "2026-09-10",
+          "external_id": "S-001",
+          "extra_fields": {},
+          "file_id": "demo-000030",
+          "id": "demo-000031",
+          "kind": "sale",
+          "line": 2,
+          "note": "Вымышленная продажа; налоговая дата задана для примера",
+          "original_kind": "sale",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-10",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "8700.00",
+          "client_id": "demo-000028",
+          "date": "2026-09-20",
+          "external_id": "C-001",
+          "extra_fields": {},
+          "file_id": "demo-000030",
+          "id": "demo-000032",
+          "kind": "commission",
+          "line": 3,
+          "note": "Комиссия, не уменьшает базу УСН Доходы",
+          "original_kind": "commission",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "3800.00",
+          "client_id": "demo-000028",
+          "date": "2026-09-20",
+          "external_id": "L-001",
+          "extra_fields": {},
+          "file_id": "demo-000030",
+          "id": "demo-000033",
+          "kind": "logistics",
+          "line": 4,
+          "note": "Логистика",
+          "original_kind": "logistics",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "60000.00",
+          "client_id": "demo-000028",
+          "date": "2026-09-25",
+          "external_id": "P-001",
+          "extra_fields": {},
+          "file_id": "demo-000030",
+          "id": "demo-000034",
+          "kind": "payout",
+          "line": 5,
+          "note": "Вымышленное поручение на выплату",
+          "original_kind": "payout",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "42500.00",
+          "client_id": "demo-000028",
+          "date": "2026-09-25",
+          "external_id": "B-001",
+          "extra_fields": {},
+          "file_id": "demo-000036",
+          "id": "demo-000037",
+          "kind": "bank_credit",
+          "line": 2,
+          "note": "Вымышленное поступление WB",
+          "original_kind": "bank_credit",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "bank",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        }
+      ],
+      "files": [
+        {
+          "client_id": "demo-000028",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "partial-bank.csv",
+          "id": "demo-000036",
+          "replaces_file_id": null,
+          "row_count": 1,
+          "sha256": "210dfae601bd16ea539bcb5313dc29bc8746700b9952c9154c1f1bd82d180f30",
+          "source": "bank",
+          "status": "imported"
+        },
+        {
+          "client_id": "demo-000028",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "partial-marketplace.csv",
+          "id": "demo-000030",
+          "replaces_file_id": null,
+          "row_count": 4,
+          "sha256": "58bd5223e19dc90c5ea1d4685a4c846e1a8e9eaf5b275f4a636830c57ff083eb",
+          "source": "marketplace",
+          "status": "imported"
+        }
+      ],
+      "history": [
+        {
+          "action": "result_calculated",
+          "actor_username": null,
+          "client_id": "demo-000028",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Рассчитан период 2026-09, версия 1, правила 2026.1.",
+          "id": "demo-000040",
+          "result_id": "demo-000039",
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000028",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл partial-bank.csv: строк 1, новых операций 1.",
+          "id": "demo-000038",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000028",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл partial-marketplace.csv: строк 4, новых операций 4.",
+          "id": "demo-000035",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "client_created",
+          "actor_username": null,
+          "client_id": "demo-000028",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Создан профиль клиента.",
+          "id": "demo-000029",
+          "result_id": null,
+          "reviewer": null
+        }
+      ],
+      "result": {
+        "client_id": "demo-000028",
+        "created_at": "2026-09-30T12:00:00+00:00",
+        "explanation": "Доход УСН за 2026-09: 72500.00 ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: 4350.00 ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: 1. Каждая сумма прослеживается до строк исходных файлов.",
+        "id": "demo-000039",
+        "income_rows": [
+          {
+            "amount": "72500.00",
+            "event_id": "demo-000031",
+            "external_id": "S-001",
+            "kind": "sale",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "S-001",
+                "file_id": "demo-000030",
+                "line": 2
+              }
+            ],
+            "tax_date": "2026-09-10"
+          }
+        ],
+        "issues": [
+          {
+            "code": "payout_partial",
+            "event_ids": [
+              "demo-000034",
+              "demo-000037"
+            ],
+            "message": "Выплата PAY-SEP-01 поступила частично: не хватает 17500.00 ₽.",
+            "severity": "blocking",
+            "sources": [
+              {
+                "external_id": "P-001",
+                "file_id": "demo-000030",
+                "line": 5
+              },
+              {
+                "external_id": "B-001",
+                "file_id": "demo-000036",
+                "line": 2
+              }
+            ]
+          },
+          {
+            "code": "tax_preliminary",
+            "event_ids": [],
+            "message": "Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.",
+            "severity": "warning",
+            "sources": []
+          }
+        ],
+        "metrics": {
+          "bank_received": "42500.00",
+          "closing_balance": "0.00",
+          "commission": "8700.00",
+          "declared_payouts": "60000.00",
+          "expected_payout": "60000.00",
+          "logistics": "3800.00",
+          "payout_difference": "17500.00",
+          "returns": "0.00",
+          "sales": "72500.00",
+          "usn_income": "72500.00",
+          "usn_tax_preliminary": "4350.00",
+          "withholding": "0.00"
+        },
+        "period": "2026-09",
+        "reconciliation": [
+          {
+            "bank_event_ids": [
+              "demo-000037"
+            ],
+            "difference": "17500.00",
+            "expected": "60000.00",
+            "payout_event_ids": [
+              "demo-000034"
+            ],
+            "received": "42500.00",
+            "settlement_id": "PAY-SEP-01",
+            "status": "partial"
+          }
+        ],
+        "reviewer": null,
+        "rules_version": "2026.1",
+        "status": "calculated",
+        "version": 1
+      }
+    },
+    {
+      "client": {
+        "_data_revision": 2,
+        "id": "demo-000041",
+        "income_data_complete": true,
+        "inn": "",
+        "marketplace": "ozon",
+        "name": "04 · Деньги пришли в октябре — Ozon · 1 250 000 ₽ продаж",
+        "opening_balance": "0.00",
+        "period": "2026-09",
+        "prior_year_income": "0.00",
+        "region": "Учебный регион",
+        "usn_rate": "6.00",
+        "vat_effective_from": "2026-01-01",
+        "vat_status": "exempt",
+        "ytd_income_before_period": "0.00"
+      },
+      "data_revision": 2,
+      "events": [
+        {
+          "active": true,
+          "amount": "1250000.00",
+          "client_id": "demo-000041",
+          "date": "2026-09-10",
+          "external_id": "S-001",
+          "extra_fields": {},
+          "file_id": "demo-000043",
+          "id": "demo-000044",
+          "kind": "sale",
+          "line": 2,
+          "note": "Вымышленная продажа; налоговая дата задана для примера",
+          "original_kind": "sale",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-10",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "187500.00",
+          "client_id": "demo-000041",
+          "date": "2026-09-20",
+          "external_id": "C-001",
+          "extra_fields": {},
+          "file_id": "demo-000043",
+          "id": "demo-000045",
+          "kind": "commission",
+          "line": 3,
+          "note": "Комиссия, не уменьшает базу УСН Доходы",
+          "original_kind": "commission",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "62500.00",
+          "client_id": "demo-000041",
+          "date": "2026-09-20",
+          "external_id": "L-001",
+          "extra_fields": {},
+          "file_id": "demo-000043",
+          "id": "demo-000046",
+          "kind": "logistics",
+          "line": 4,
+          "note": "Логистика",
+          "original_kind": "logistics",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "1000000.00",
+          "client_id": "demo-000041",
+          "date": "2026-09-25",
+          "external_id": "P-001",
+          "extra_fields": {},
+          "file_id": "demo-000043",
+          "id": "demo-000047",
+          "kind": "payout",
+          "line": 5,
+          "note": "Вымышленное поручение на выплату",
+          "original_kind": "payout",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "1000000.00",
+          "client_id": "demo-000041",
+          "date": "2026-10-02",
+          "external_id": "B-001",
+          "extra_fields": {},
+          "file_id": "demo-000049",
+          "id": "demo-000050",
+          "kind": "bank_credit",
+          "line": 2,
+          "note": "Вымышленное поступление Ozon",
+          "original_kind": "bank_credit",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "bank",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        }
+      ],
+      "files": [
+        {
+          "client_id": "demo-000041",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "next_month-bank.csv",
+          "id": "demo-000049",
+          "replaces_file_id": null,
+          "row_count": 1,
+          "sha256": "9c2422317030b5ce157f4d7c4c3367a83bdebda7da649c2c99faf399f06f17b4",
+          "source": "bank",
+          "status": "imported"
+        },
+        {
+          "client_id": "demo-000041",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "next_month-marketplace.csv",
+          "id": "demo-000043",
+          "replaces_file_id": null,
+          "row_count": 4,
+          "sha256": "bd6ca82976872c5d34e94ddf9d68cc126eab66c437af6ad51e396ea94cc8ef0b",
+          "source": "marketplace",
+          "status": "imported"
+        }
+      ],
+      "history": [
+        {
+          "action": "result_calculated",
+          "actor_username": null,
+          "client_id": "demo-000041",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Рассчитан период 2026-09, версия 1, правила 2026.1.",
+          "id": "demo-000053",
+          "result_id": "demo-000052",
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000041",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл next_month-bank.csv: строк 1, новых операций 1.",
+          "id": "demo-000051",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000041",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл next_month-marketplace.csv: строк 4, новых операций 4.",
+          "id": "demo-000048",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "client_created",
+          "actor_username": null,
+          "client_id": "demo-000041",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Создан профиль клиента.",
+          "id": "demo-000042",
+          "result_id": null,
+          "reviewer": null
+        }
+      ],
+      "result": {
+        "client_id": "demo-000041",
+        "created_at": "2026-09-30T12:00:00+00:00",
+        "explanation": "Доход УСН за 2026-09: 1250000.00 ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: 75000.00 ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: 0. Каждая сумма прослеживается до строк исходных файлов.",
+        "id": "demo-000052",
+        "income_rows": [
+          {
+            "amount": "1250000.00",
+            "event_id": "demo-000044",
+            "external_id": "S-001",
+            "kind": "sale",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "S-001",
+                "file_id": "demo-000043",
+                "line": 2
+              }
+            ],
+            "tax_date": "2026-09-10"
+          }
+        ],
+        "issues": [
+          {
+            "code": "next_period_receipt",
+            "event_ids": [
+              "demo-000047",
+              "demo-000050"
+            ],
+            "message": "Выплата PAY-SEP-01 полностью поступила с переносом в следующий период.",
+            "severity": "warning",
+            "sources": [
+              {
+                "external_id": "P-001",
+                "file_id": "demo-000043",
+                "line": 5
+              },
+              {
+                "external_id": "B-001",
+                "file_id": "demo-000049",
+                "line": 2
+              }
+            ]
+          },
+          {
+            "code": "tax_preliminary",
+            "event_ids": [],
+            "message": "Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.",
+            "severity": "warning",
+            "sources": []
+          }
+        ],
+        "metrics": {
+          "bank_received": "1000000.00",
+          "closing_balance": "0.00",
+          "commission": "187500.00",
+          "declared_payouts": "1000000.00",
+          "expected_payout": "1000000.00",
+          "logistics": "62500.00",
+          "payout_difference": "0.00",
+          "returns": "0.00",
+          "sales": "1250000.00",
+          "usn_income": "1250000.00",
+          "usn_tax_preliminary": "75000.00",
+          "withholding": "0.00"
+        },
+        "period": "2026-09",
+        "reconciliation": [
+          {
+            "bank_event_ids": [
+              "demo-000050"
+            ],
+            "difference": "0.00",
+            "expected": "1000000.00",
+            "payout_event_ids": [
+              "demo-000047"
+            ],
+            "received": "1000000.00",
+            "settlement_id": "PAY-SEP-01",
+            "status": "next_period"
+          }
+        ],
+        "reviewer": null,
+        "rules_version": "2026.1",
+        "status": "calculated",
+        "version": 1
+      }
+    },
+    {
+      "client": {
+        "_data_revision": 2,
+        "id": "demo-000054",
+        "income_data_complete": true,
+        "inn": "",
+        "marketplace": "wb",
+        "name": "05 · Неизвестная компенсация — WB · 38 450,75 ₽ продаж",
+        "opening_balance": "0.00",
+        "period": "2026-09",
+        "prior_year_income": "0.00",
+        "region": "Учебный регион",
+        "usn_rate": "6.00",
+        "vat_effective_from": "2026-01-01",
+        "vat_status": "exempt",
+        "ytd_income_before_period": "0.00"
+      },
+      "data_revision": 2,
+      "events": [
+        {
+          "active": true,
+          "amount": "38450.75",
+          "client_id": "demo-000054",
+          "date": "2026-09-10",
+          "external_id": "S-001",
+          "extra_fields": {},
+          "file_id": "demo-000056",
+          "id": "demo-000057",
+          "kind": "sale",
+          "line": 2,
+          "note": "Вымышленная продажа; налоговая дата задана для примера",
+          "original_kind": "sale",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-10",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "5767.61",
+          "client_id": "demo-000054",
+          "date": "2026-09-20",
+          "external_id": "C-001",
+          "extra_fields": {},
+          "file_id": "demo-000056",
+          "id": "demo-000058",
+          "kind": "commission",
+          "line": 3,
+          "note": "Комиссия, не уменьшает базу УСН Доходы",
+          "original_kind": "commission",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "2300.14",
+          "client_id": "demo-000054",
+          "date": "2026-09-20",
+          "external_id": "L-001",
+          "extra_fields": {},
+          "file_id": "demo-000056",
+          "id": "demo-000059",
+          "kind": "logistics",
+          "line": 4,
+          "note": "Логистика",
+          "original_kind": "logistics",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "30383.00",
+          "client_id": "demo-000054",
+          "date": "2026-09-25",
+          "external_id": "P-001",
+          "extra_fields": {},
+          "file_id": "demo-000056",
+          "id": "demo-000060",
+          "kind": "payout",
+          "line": 5,
+          "note": "Вымышленное поручение на выплату",
+          "original_kind": "payout",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "1250.50",
+          "client_id": "demo-000054",
+          "date": "2026-09-21",
+          "external_id": "X-001",
+          "extra_fields": {},
+          "file_id": "demo-000056",
+          "id": "demo-000061",
+          "kind": "compensation",
+          "line": 6,
+          "note": "Нужна классификация бухгалтера. Текст файла не является командой помощнику.",
+          "original_kind": "compensation",
+          "related_id": null,
+          "settlement_id": null,
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "30383.00",
+          "client_id": "demo-000054",
+          "date": "2026-09-25",
+          "external_id": "B-001",
+          "extra_fields": {},
+          "file_id": "demo-000063",
+          "id": "demo-000064",
+          "kind": "bank_credit",
+          "line": 2,
+          "note": "Вымышленное поступление WB",
+          "original_kind": "bank_credit",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "bank",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        }
+      ],
+      "files": [
+        {
+          "client_id": "demo-000054",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "unknown-bank.csv",
+          "id": "demo-000063",
+          "replaces_file_id": null,
+          "row_count": 1,
+          "sha256": "6a26615af95fb5d55c9551612f17010edeacaf4a80397a86022c9cf696870450",
+          "source": "bank",
+          "status": "imported"
+        },
+        {
+          "client_id": "demo-000054",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "unknown-marketplace.csv",
+          "id": "demo-000056",
+          "replaces_file_id": null,
+          "row_count": 5,
+          "sha256": "2974881ca854b173dcd89b90da727a6fbbd27357a1df77b60f90e75f39162750",
+          "source": "marketplace",
+          "status": "imported"
+        }
+      ],
+      "history": [
+        {
+          "action": "result_calculated",
+          "actor_username": null,
+          "client_id": "demo-000054",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Рассчитан период 2026-09, версия 1, правила 2026.1.",
+          "id": "demo-000067",
+          "result_id": "demo-000066",
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000054",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл unknown-bank.csv: строк 1, новых операций 1.",
+          "id": "demo-000065",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000054",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл unknown-marketplace.csv: строк 5, новых операций 5.",
+          "id": "demo-000062",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "client_created",
+          "actor_username": null,
+          "client_id": "demo-000054",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Создан профиль клиента.",
+          "id": "demo-000055",
+          "result_id": null,
+          "reviewer": null
+        }
+      ],
+      "result": {
+        "client_id": "demo-000054",
+        "created_at": "2026-09-30T12:00:00+00:00",
+        "explanation": "Доход УСН за 2026-09: 38450.75 ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: 2307.05 ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: 1. Каждая сумма прослеживается до строк исходных файлов.",
+        "id": "demo-000066",
+        "income_rows": [
+          {
+            "amount": "38450.75",
+            "event_id": "demo-000057",
+            "external_id": "S-001",
+            "kind": "sale",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "S-001",
+                "file_id": "demo-000056",
+                "line": 2
+              }
+            ],
+            "tax_date": "2026-09-10"
+          }
+        ],
+        "issues": [
+          {
+            "code": "unknown_kind",
+            "event_ids": [
+              "demo-000061"
+            ],
+            "message": "Операция «compensation» не классифицирована для источника marketplace. Её сумма не включена в показатели.",
+            "severity": "blocking",
+            "sources": [
+              {
+                "external_id": "X-001",
+                "file_id": "demo-000056",
+                "line": 6
+              }
+            ]
+          },
+          {
+            "code": "tax_preliminary",
+            "event_ids": [],
+            "message": "Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.",
+            "severity": "warning",
+            "sources": []
+          }
+        ],
+        "metrics": {
+          "bank_received": "30383.00",
+          "closing_balance": "0.00",
+          "commission": "5767.61",
+          "declared_payouts": "30383.00",
+          "expected_payout": "30383.00",
+          "logistics": "2300.14",
+          "payout_difference": "0.00",
+          "returns": "0.00",
+          "sales": "38450.75",
+          "usn_income": "38450.75",
+          "usn_tax_preliminary": "2307.05",
+          "withholding": "0.00"
+        },
+        "period": "2026-09",
+        "reconciliation": [
+          {
+            "bank_event_ids": [
+              "demo-000064"
+            ],
+            "difference": "0.00",
+            "expected": "30383.00",
+            "payout_event_ids": [
+              "demo-000060"
+            ],
+            "received": "30383.00",
+            "settlement_id": "PAY-SEP-01",
+            "status": "matched"
+          }
+        ],
+        "reviewer": null,
+        "rules_version": "2026.1",
+        "status": "calculated",
+        "version": 1
+      }
+    },
+    {
+      "client": {
+        "_data_revision": 2,
+        "id": "demo-000068",
+        "income_data_complete": true,
+        "inn": "",
+        "marketplace": "wb",
+        "name": "06 · Несколько вопросов сразу — WB · 560 000 ₽ продаж",
+        "opening_balance": "0.00",
+        "period": "2026-09",
+        "prior_year_income": null,
+        "region": "Учебный регион",
+        "usn_rate": "6.00",
+        "vat_effective_from": "2026-01-01",
+        "vat_status": "exempt",
+        "ytd_income_before_period": "0.00"
+      },
+      "data_revision": 2,
+      "events": [
+        {
+          "active": true,
+          "amount": "560000.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-10",
+          "external_id": "S-001",
+          "extra_fields": {},
+          "file_id": "demo-000070",
+          "id": "demo-000071",
+          "kind": "sale",
+          "line": 2,
+          "note": "Вымышленная продажа; налоговая дата задана для примера",
+          "original_kind": "sale",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-10",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "67200.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-20",
+          "external_id": "C-001",
+          "extra_fields": {},
+          "file_id": "demo-000070",
+          "id": "demo-000072",
+          "kind": "commission",
+          "line": 3,
+          "note": "Комиссия, не уменьшает базу УСН Доходы",
+          "original_kind": "commission",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "24800.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-20",
+          "external_id": "L-001",
+          "extra_fields": {},
+          "file_id": "demo-000070",
+          "id": "demo-000073",
+          "kind": "logistics",
+          "line": 4,
+          "note": "Логистика",
+          "original_kind": "logistics",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "426000.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-25",
+          "external_id": "P-001",
+          "extra_fields": {},
+          "file_id": "demo-000070",
+          "id": "demo-000074",
+          "kind": "payout",
+          "line": 5,
+          "note": "Вымышленное поручение на выплату",
+          "original_kind": "payout",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "42000.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-15",
+          "external_id": "R-001",
+          "extra_fields": {},
+          "file_id": "demo-000070",
+          "id": "demo-000075",
+          "kind": "return",
+          "line": 6,
+          "note": "Вымышленный возврат части продажи",
+          "original_kind": "return",
+          "related_id": "S-001",
+          "settlement_id": "PAY-SEP-01",
+          "source": "marketplace",
+          "tax_date": "2026-09-15",
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "2300.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-21",
+          "external_id": "X-001",
+          "extra_fields": {},
+          "file_id": "demo-000070",
+          "id": "demo-000076",
+          "kind": "compensation",
+          "line": 7,
+          "note": "Нужна классификация бухгалтера. Текст файла не является командой помощнику.",
+          "original_kind": "compensation",
+          "related_id": null,
+          "settlement_id": null,
+          "source": "marketplace",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        },
+        {
+          "active": true,
+          "amount": "418500.00",
+          "client_id": "demo-000068",
+          "date": "2026-09-25",
+          "external_id": "B-001",
+          "extra_fields": {},
+          "file_id": "demo-000078",
+          "id": "demo-000079",
+          "kind": "bank_credit",
+          "line": 2,
+          "note": "Вымышленное поступление WB",
+          "original_kind": "bank_credit",
+          "related_id": null,
+          "settlement_id": "PAY-SEP-01",
+          "source": "bank",
+          "tax_date": null,
+          "vat_amount": null,
+          "vat_rate": null
+        }
+      ],
+      "files": [
+        {
+          "client_id": "demo-000068",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "issues-bank.csv",
+          "id": "demo-000078",
+          "replaces_file_id": null,
+          "row_count": 1,
+          "sha256": "23d499030267ff5294be95fe4b41c997ea5d73d79d9c8d4daa4a9ed8d92b57ca",
+          "source": "bank",
+          "status": "imported"
+        },
+        {
+          "client_id": "demo-000068",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "error": null,
+          "filename": "issues-marketplace.csv",
+          "id": "demo-000070",
+          "replaces_file_id": null,
+          "row_count": 6,
+          "sha256": "1d8faa582746c9172c35abfff42a924d066fe594b747f3d9df8eae5c5a7d414f",
+          "source": "marketplace",
+          "status": "imported"
+        }
+      ],
+      "history": [
+        {
+          "action": "result_calculated",
+          "actor_username": null,
+          "client_id": "demo-000068",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Рассчитан период 2026-09, версия 1, правила 2026.1.",
+          "id": "demo-000082",
+          "result_id": "demo-000081",
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000068",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл issues-bank.csv: строк 1, новых операций 1.",
+          "id": "demo-000080",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "file_imported",
+          "actor_username": null,
+          "client_id": "demo-000068",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Файл issues-marketplace.csv: строк 6, новых операций 6.",
+          "id": "demo-000077",
+          "result_id": null,
+          "reviewer": null
+        },
+        {
+          "action": "client_created",
+          "actor_username": null,
+          "client_id": "demo-000068",
+          "created_at": "2026-09-30T12:00:00+00:00",
+          "detail": "Создан профиль клиента.",
+          "id": "demo-000069",
+          "result_id": null,
+          "reviewer": null
+        }
+      ],
+      "result": {
+        "client_id": "demo-000068",
+        "created_at": "2026-09-30T12:00:00+00:00",
+        "explanation": "Доход УСН за 2026-09: 518000.00 ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: 31080.00 ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: 3. Каждая сумма прослеживается до строк исходных файлов.",
+        "id": "demo-000081",
+        "income_rows": [
+          {
+            "amount": "560000.00",
+            "event_id": "demo-000071",
+            "external_id": "S-001",
+            "kind": "sale",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "S-001",
+                "file_id": "demo-000070",
+                "line": 2
+              }
+            ],
+            "tax_date": "2026-09-10"
+          },
+          {
+            "amount": "-42000.00",
+            "event_id": "demo-000075",
+            "external_id": "R-001",
+            "kind": "return",
+            "provisional": false,
+            "sources": [
+              {
+                "external_id": "R-001",
+                "file_id": "demo-000070",
+                "line": 6
+              }
+            ],
+            "tax_date": "2026-09-15"
+          }
+        ],
+        "issues": [
+          {
+            "code": "unknown_kind",
+            "event_ids": [
+              "demo-000076"
+            ],
+            "message": "Операция «compensation» не классифицирована для источника marketplace. Её сумма не включена в показатели.",
+            "severity": "blocking",
+            "sources": [
+              {
+                "external_id": "X-001",
+                "file_id": "demo-000070",
+                "line": 7
+              }
+            ]
+          },
+          {
+            "code": "payout_partial",
+            "event_ids": [
+              "demo-000074",
+              "demo-000079"
+            ],
+            "message": "Выплата PAY-SEP-01 поступила частично: не хватает 7500.00 ₽.",
+            "severity": "blocking",
+            "sources": [
+              {
+                "external_id": "P-001",
+                "file_id": "demo-000070",
+                "line": 5
+              },
+              {
+                "external_id": "B-001",
+                "file_id": "demo-000078",
+                "line": 2
+              }
+            ]
+          },
+          {
+            "code": "tax_preliminary",
+            "event_ids": [],
+            "message": "Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.",
+            "severity": "warning",
+            "sources": []
+          },
+          {
+            "code": "vat_evidence_missing",
+            "event_ids": [],
+            "message": "Для проверки освобождения нужны доходы предыдущего года, текущего года до периода и подтверждение полноты всех доходов.",
+            "severity": "blocking",
+            "sources": []
+          }
+        ],
+        "metrics": {
+          "bank_received": "418500.00",
+          "closing_balance": "0.00",
+          "commission": "67200.00",
+          "declared_payouts": "426000.00",
+          "expected_payout": "426000.00",
+          "logistics": "24800.00",
+          "payout_difference": "7500.00",
+          "returns": "42000.00",
+          "sales": "560000.00",
+          "usn_income": "518000.00",
+          "usn_tax_preliminary": "31080.00",
+          "withholding": "0.00"
+        },
+        "period": "2026-09",
+        "reconciliation": [
+          {
+            "bank_event_ids": [
+              "demo-000079"
+            ],
+            "difference": "7500.00",
+            "expected": "426000.00",
+            "payout_event_ids": [
+              "demo-000074"
+            ],
+            "received": "418500.00",
+            "settlement_id": "PAY-SEP-01",
+            "status": "partial"
+          }
+        ],
+        "reviewer": null,
+        "rules_version": "2026.1",
+        "status": "calculated",
+        "version": 1
+      }
+    }
+  ]
+}
