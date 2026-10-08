@@ -2,8 +2,12 @@
 (() => {
   'use strict';
   const fixtureUrl = new URL('./fixtures.json', document.currentScript.src);
+  const taxRulesUrl = new URL('./tax-rules.json', document.currentScript.src);
   const STORAGE_KEY = 'accountingplus-demo-v1';
-  const PROFILE_FIELDS = ['name', 'inn', 'marketplace', 'region', 'usn_rate', 'vat_status', 'vat_effective_from', 'prior_year_income', 'ytd_income_before_period', 'income_data_complete', 'opening_balance', 'period'];
+  const PROFILE_FIELDS = ['name', 'inn', 'marketplace', 'region', 'usn_rate', 'vat_status', 'vat_effective_from', 'prior_year_income', 'ytd_income_before_period', 'income_data_complete', 'opening_balance', 'period', 'tax_regime', 'has_employees'];
+  const LEDGER_FIELDS = ['year', 'policy', 'policy_confirmed', 'additional_recognition', 'full_year_activity', 'fixed_override', 'fixed_override_reason', 'prior_additional_amount', 'prior_additional_used', 'prior_additional_confirmed', 'periods', 'payments'];
+  const LEDGER_PERIOD_FIELDS = ['period', 'income_override', 'outside_income', 'tax_expenses', 'management_expenses', 'prior_advances', 'previous_deduction', 'income_confirmed', 'expenses_confirmed', 'income_note', 'expense_note'];
+  const PAYMENT_FIELDS = ['id', 'kind', 'amount', 'date', 'liability_year', 'confirmed', 'source', 'note'];
   const EVENT_FIELDS = ['kind', 'tax_date', 'settlement_id', 'related_id', 'note'];
   const HEADERS = ['external_id', 'kind', 'date', 'amount', 'tax_date', 'settlement_id', 'related_id', 'note', 'vat_rate', 'vat_amount'];
   const RESULT_METADATA = new Set(['id', 'client_id', 'period', 'version', 'status', 'created_at', 'reviewer', '_demo_revision', '_demo_fingerprint']);
@@ -55,8 +59,13 @@
     if (p.inn && !/^\d{12}$/.test(p.inn)) throw new Error('Для ИП требуется ИНН из 12 цифр; для учебного примера поле можно оставить пустым.');
     if (!['wb', 'ozon'].includes(p.marketplace)) throw new Error('Выберите Wildberries или Ozon.');
     if (typeof p.region !== 'string' || p.region.length > 150) throw new Error('Регион должен быть текстом до 150 символов.');
-    p.usn_rate = moneyValue(p.usn_rate);
-    if (Number(p.usn_rate) > 6) throw new Error('Поддерживается УСН «Доходы» со ставкой 0–6%.');
+    p.tax_regime ??= 'income';
+    if (!['income', 'income_expenses'].includes(p.tax_regime)) throw new Error('Выберите УСН «Доходы» или «Доходы минус расходы».');
+    p.has_employees ??= null;
+    if (p.has_employees !== null && typeof p.has_employees !== 'boolean') throw new Error('Укажите наличие работников или оставьте статус неизвестным.');
+    const regimeRules = taxRules.regimes[p.tax_regime];
+    p.usn_rate = moneyValue(p.usn_rate === null || p.usn_rate === undefined || String(p.usn_rate).trim() === '' ? regimeRules.default_rate : p.usn_rate);
+    if (Number(p.usn_rate) > Number(regimeRules.max_rate)) throw new Error(`Ставка выбранного режима УСН должна быть от 0 до ${regimeRules.max_rate}%.`);
     if (!['exempt', 'unknown', '5', '7'].includes(p.vat_status)) throw new Error('Некорректный статус НДС.');
     p.vat_effective_from = dateValue(p.vat_effective_from, true);
     p.prior_year_income = moneyValue(p.prior_year_income, true);
@@ -99,7 +108,13 @@
     for (const workspace of value.workspaces) {
       if (!plain(workspace) || typeof workspace.client?.id !== 'string' || clientIds.has(workspace.client.id) || !Number.isSafeInteger(workspace.data_revision) || workspace.data_revision < 0) throw new Error('Некорректное рабочее место.');
       clientIds.add(workspace.client.id);
-      validateProfile(workspace.client);
+      workspace.client = validateProfile(workspace.client);
+      workspace.financial_drafts ??= {};
+      if (!plain(workspace.financial_drafts)) throw new Error('Некорректные годовые черновики.');
+      for (const [year, draft] of Object.entries(workspace.financial_drafts)) {
+        if (!/^20\d{2}$/.test(year) || !plain(draft) || !Number.isSafeInteger(draft.revision) || draft.revision < 0 || draft.ledger?.year !== Number(year)) throw new Error('Некорректный годовой черновик.');
+        draft.ledger = userLedger(draft.ledger);
+      }
       for (const key of ['files', 'events', 'history', 'results']) if (!Array.isArray(workspace[key])) throw new Error('Некорректные списки рабочего места.');
       if (workspace.events.length > 10000 || workspace.files.length > 1000 || workspace.history.length > 20000 || workspace.results.length > 1000) throw new Error('Слишком большой учебный набор.');
       if (workspace.files.some(file => !plain(file) || typeof file.id !== 'string' || file.client_id !== workspace.client.id)) throw new Error('Некорректные документы клиента.');
@@ -108,15 +123,18 @@
     }
     return value;
   }
-  let fixtures, baseline, database, persistedText;
+  let fixtures, baseline, database, persistedText, taxRules;
   let queue = Promise.resolve();
   const blobUrls = new Map();
   const fixtureReady = (async () => {
-    let response;
-    try { response = await fetch(fixtureUrl); }
+    let response, rulesResponse;
+    try { [response, rulesResponse] = await Promise.all([fetch(fixtureUrl), fetch(taxRulesUrl)]); }
     catch { throw new Error('Не удалось загрузить учебные примеры. Проверьте интернет и обновите страницу.'); }
     if (!response.ok) throw new Error('Учебные примеры временно недоступны. Обновите страницу позже.');
-    fixtures = await response.json(); baseline = makeBaseline(fixtures);
+    if (!rulesResponse.ok) throw new Error('Справочник налоговых правил временно недоступен. Обновите страницу позже.');
+    [fixtures, taxRules] = await Promise.all([response.json(), rulesResponse.json()]);
+    if (!plain(taxRules) || !plain(taxRules.regimes) || !plain(taxRules.regimes.income) || !plain(taxRules.regimes.income_expenses) || !Array.isArray(taxRules.periods) || !plain(taxRules.years)) throw new Error('Справочник налоговых правил имеет неподдерживаемый формат.');
+    baseline = makeBaseline(fixtures);
   })();
   function storageRead() {
     try { return localStorage.getItem(STORAGE_KEY); }
@@ -194,16 +212,21 @@
     return result;
   }
   function updateProfile(workspace, body) {
-    unknownFields(body, PROFILE_FIELDS, 'Неизвестные поля профиля.');
+    unknownFields(body, [...PROFILE_FIELDS, '_data_revision'], 'Неизвестные поля профиля.');
+    if (Object.hasOwn(body, '_data_revision') && (!Number.isSafeInteger(body._data_revision) || body._data_revision < 0 || body._data_revision !== workspace.data_revision)) {
+      const error = new Error('Профиль устарел: исходные данные или профиль изменились. Обновите кабинет и повторите правку.'); error.status = 409; throw error;
+    }
+    const changes = Object.fromEntries(Object.entries(body).filter(([key]) => key !== '_data_revision'));
     const old = Object.fromEntries(PROFILE_FIELDS.map(key => [key, workspace.client[key]]));
-    const combined = { ...old, ...body };
+    const combined = { ...old, ...changes };
+    if (changes.tax_regime && changes.tax_regime !== old.tax_regime && !Object.hasOwn(changes, 'usn_rate')) combined.usn_rate = taxRules.regimes[changes.tax_regime]?.default_rate;
     const periodChanged = combined.period !== old.period;
     if (periodChanged) Object.assign(combined, { opening_balance: null, ytd_income_before_period: null, income_data_complete: false });
     const profile = validateProfile(combined);
     if (stable(old) === stable(profile)) return workspace.client;
     workspace.client = { ...profile, id: workspace.client.id, _data_revision: workspace.data_revision };
     invalidate(workspace);
-    journal(workspace, 'profile_updated', `Изменён учебный профиль: ${Object.keys(body).sort().join(', ')}.${periodChanged ? ' Начальный остаток и доходы до периода сброшены в неизвестные.' : ''}`);
+    journal(workspace, 'profile_updated', `Изменён учебный профиль: ${Object.keys(changes).sort().join(', ')}.${periodChanged ? ' Начальный остаток и доходы до периода сброшены в неизвестные.' : ''}`);
     return workspace.client;
   }
   function updateEvent(workspace, eventId, body) {
@@ -255,17 +278,109 @@
     const value = key => metrics[key] === null || metrics[key] === undefined ? 'недостаточно данных' : `${metrics[key]} ₽`;
     const text = body.question.toLocaleLowerCase('ru-RU');
     const lines = ['Учебное пояснение по расчёту. Модель ИИ не подключена.'];
-    if (['доход', 'налог', 'усн', 'комисс'].some(word => text.includes(word))) lines.push(`Доход для УСН: ${value('usn_income')}. Предварительный налог до уменьшений: ${value('usn_tax_preliminary')}.`, `Комиссии ${value('commission')} и логистика ${value('logistics')} уменьшают ожидаемую выплату, но не базу УСН «Доходы».`, 'Возвраты и даты признания проверяйте по связанным операциям. Это не окончательная сумма к уплате.');
+    if (['доход', 'налог', 'усн', 'комисс'].some(word => text.includes(word))) {
+      if (workspace.client.tax_regime === 'income_expenses') lines.push(`Выбран режим УСН «Доходы минус расходы». Доход: ${value('usn_income')}.`, `Комиссии ${value('commission')} и логистика ${value('logistics')} уменьшают выплату; они учитываются в признанных налоговых расходах после проверки условий и документов бухгалтером.`, 'Налог рассчитывается нарастающим итогом в разделе «Финансы», с собственными взносами в расходах и годовым минимальным налогом. Банковское списание само по себе не подтверждает расход.');
+      else lines.push(`Доход для УСН: ${value('usn_income')}. Предварительный налог до уменьшений: ${value('usn_tax_preliminary')}.`, `Комиссии ${value('commission')} и логистика ${value('logistics')} уменьшают ожидаемую выплату, но не базу УСН «Доходы».`, 'Возвраты и даты признания проверяйте по связанным операциям. Итоговый налог после взносов смотрите в разделе «Финансы».');
+    }
     else if (['свер', 'расхожд', 'банк', 'выплат'].some(word => text.includes(word))) {
       lines.push(`Выплаты по отчёту: ${value('declared_payouts')}. Связанные поступления банка: ${value('bank_received')}. Разница: ${value('payout_difference')}.`, `Остаток расчётов с маркетплейсом: ${value('closing_balance')}. Сопоставление выполнено по идентификаторам выплат. Совпадение сумм само по себе не доказывает связь.`);
       for (const row of result.reconciliation.slice(0, 15)) lines.push(`${row.settlement_id || 'Без связи'}: ${row.status}, разница ${row.difference} ₽.`);
     } else lines.push(`Доход для УСН: ${value('usn_income')}; предварительный налог: ${value('usn_tax_preliminary')}; разница выплат с банком: ${value('payout_difference')}.`);
+    if (workspace.client.tax_regime === 'income_expenses') lines.push('Для выбранного режима «Доходы минус расходы» расчёт налога находится в разделе «Финансы». Месячная сверка не заменяет годовой расчёт.');
     lines.push(`Вопросов для проверки: ${result.issues.length}, блокирующих: ${result.issues.filter(issue => issue.severity === 'blocking').length}.`);
     for (const issue of result.issues.slice(0, 20)) lines.push(`• ${issue.message}`);
     if (result.issues.length > 20) lines.push('Остальные вопросы доступны в разделе проверки.');
     const sources = [...result.income_rows, ...result.issues].flatMap(row => row.sources || []);
     const unique = new Map(sources.map(source => [stable(source), source]));
     return { mode: 'offline', provider: null, answer: lines.join('\n\n'), sources: [...unique.values()].slice(0, 100) };
+  }
+  function financeYear(value) {
+    const year = typeof value === 'string' && /^20\d{2}$/.test(value) ? Number(value) : value;
+    if (!Number.isInteger(year) || year < 2000 || year > 2099) throw new Error('Укажите финансовый год в формате YYYY.');
+    return year;
+  }
+  function fiscalModule() {
+    if (!window.AccountingPlusFiscal?.defaultLedger || !window.AccountingPlusFiscal?.validateLedger || !window.AccountingPlusFiscal?.calculateFiscalYear || !window.AccountingPlusFinanceData?.prepare) throw new Error('Модуль годовых финансов ещё не загрузился. Обновите страницу.');
+    return window.AccountingPlusFiscal;
+  }
+  function userLedger(ledger) {
+    unknownFields(ledger, LEDGER_FIELDS, 'Годовой черновик может содержать только введённые данные. Расчётные показатели изменять нельзя.');
+    if (!Array.isArray(ledger.periods) || !Array.isArray(ledger.payments)) throw new Error('В годовом черновике нужны периоды и оплаты.');
+    for (const period of ledger.periods) unknownFields(period, LEDGER_PERIOD_FIELDS, 'В периоде черновика можно сохранять только введённые суммы, подтверждения и пояснения.');
+    for (const payment of ledger.payments) unknownFields(payment, PAYMENT_FIELDS, 'Неизвестные поля оплаты.');
+    const validated = fiscalModule().validateLedger(clone(ledger));
+    return { ...Object.fromEntries(LEDGER_FIELDS.filter(key => !['periods', 'payments'].includes(key)).map(key => [key, validated[key]])), periods: validated.periods.map(period => Object.fromEntries(LEDGER_PERIOD_FIELDS.map(key => [key, period[key]]))), payments: validated.payments.map(payment => Object.fromEntries(PAYMENT_FIELDS.map(key => [key, payment[key]]))) };
+  }
+  function financeSnapshot(workspace, year) {
+    year = financeYear(year);
+    const fiscal = fiscalModule(); const draft = workspace.financial_drafts[String(year)];
+    const ledger = draft ? clone(draft.ledger) : userLedger(fiscal.defaultLedger(year));
+    const prepared = window.AccountingPlusFinanceData.prepare(publicClone(workspace), ledger, taxRules);
+    const source_totals = prepared.ledger.periods.map(period => Object.fromEntries(['period', 'marketplace_income', 'marketplace_revenue', 'marketplace_costs', 'bank_received', 'bank_debits'].map(key => [key, period[key] ?? null])));
+    return { year, revision: draft?.revision || 0, client_revision: workspace.data_revision, ledger, result: fiscal.calculateFiscalYear(publicClone(workspace.client), prepared.ledger, taxRules), sources: prepared.sources, monthly: prepared.monthly, source_totals };
+  }
+  function saveFinance(workspace, body) {
+    unknownFields(body, ['year', 'revision', 'client_revision', 'ledger', 'reviewer', 'reason'], 'Неизвестные поля сохранения финансов.');
+    const year = financeYear(body.year);
+    validateReviewer(body.reviewer, body.reason, true);
+    if (!Number.isSafeInteger(body.revision) || body.revision < 0 || !Number.isSafeInteger(body.client_revision) || body.client_revision < 0) throw new Error('Для сохранения финансов укажите версии годового черновика и исходных данных.');
+    const current = workspace.financial_drafts[String(year)];
+    if (body.revision !== (current?.revision || 0) || body.client_revision !== workspace.data_revision) {
+      const error = new Error('Финансовый черновик устарел: профиль, исходные данные или годовой черновик изменились. Обновите финансы и повторите правку.'); error.status = 409; throw error;
+    }
+    const ledger = userLedger(body.ledger);
+    if (ledger.year !== year) throw new Error('Год черновика не совпадает с выбранным финансовым годом.');
+    if (!current || stable(current.ledger) !== stable(ledger)) {
+      workspace.financial_drafts[String(year)] = { revision: (current?.revision || 0) + 1, ledger };
+      journal(workspace, 'finance_updated', { year, revision: workspace.financial_drafts[String(year)].revision, reason: body.reason.trim() }, body.reviewer.trim());
+    }
+    return financeSnapshot(workspace, year);
+  }
+  function financeDemoData(scenario) {
+    const expenseMode = scenario === 'expenses_min';
+    if (!['income_5m', 'income_500k', 'expenses_min'].includes(scenario)) throw new Error('Финансовый учебный пример не найден.');
+    const fiscal = fiscalModule(); const year = 2026; const ledger = fiscal.defaultLedger(year);
+    const quarterly = scenario === 'income_500k' ? [125000, 125000, 125000, 125000] : [1000000, 1000000, 1000000, 2000000];
+    const profile = { name: scenario === 'income_500k' ? 'Учебный год · Доходы 500 тыс. ₽' : expenseMode ? 'Учебный год · Д−Р и минимальный налог' : 'Учебный год · Доходы 5 млн ₽', inn: '', marketplace: 'wb', region: 'Учебный регион', tax_regime: expenseMode ? 'income_expenses' : 'income', has_employees: false, usn_rate: taxRules.regimes[expenseMode ? 'income_expenses' : 'income'].default_rate, vat_status: 'exempt', vat_effective_from: `${year}-01-01`, prior_year_income: '0.00', ytd_income_before_period: `${quarterly.slice(0, 3).reduce((sum, amount) => sum + amount, 0)}.00`, income_data_complete: true, opening_balance: '0.00', period: `${year}-12` };
+    Object.assign(ledger, { policy: 'accrued', policy_confirmed: true, additional_recognition: 'current', full_year_activity: true, prior_additional_amount: '0.00', prior_additional_used: '0.00', prior_additional_confirmed: true });
+    const priorAdvances = scenario === 'income_500k' ? ['0.00', '0.00', '0.00', '0.00'] : expenseMode ? ['0.00', '0.00', '3391.50', '9391.50'] : ['0.00', '0.00', '45610.00', '95610.00'];
+    const previousDeductions = scenario === 'income_500k' ? ['0.00', '7500.00', '15000.00', '22500.00'] : expenseMode ? ['0.00', '57390.00', '57390.00', '57390.00'] : ['0.00', '60000.00', '74390.00', '84390.00'];
+    let accumulated = 0; const marketplace = [], bank = [];
+    quarterly.forEach((amount, index) => {
+      accumulated += amount; const month = String((index + 1) * 3).padStart(2, '0'); const settlement = `FIN-${index + 1}`;
+      marketplace.push({ external_id: `FIN-S-${index + 1}`, kind: 'sale', date: `${year}-${month}-15`, tax_date: `${year}-${month}-15`, amount: `${amount}.00`, settlement_id: settlement, note: 'Вымышленная продажа для годового учебного расчёта' },
+        { external_id: `FIN-C-${index + 1}`, kind: 'commission', date: `${year}-${month}-20`, amount: `${amount / 10}.00`, settlement_id: settlement, note: 'Вымышленная комиссия' },
+        { external_id: `FIN-L-${index + 1}`, kind: 'logistics', date: `${year}-${month}-20`, amount: `${amount / 20}.00`, settlement_id: settlement, note: 'Вымышленная логистика' },
+        { external_id: `FIN-P-${index + 1}`, kind: 'payout', date: `${year}-${month}-25`, amount: `${amount * 85 / 100}.00`, settlement_id: settlement, note: 'Вымышленная выплата' });
+      bank.push({ external_id: `FIN-B-${index + 1}`, kind: 'bank_credit', date: `${year}-${month}-26`, amount: `${amount * 85 / 100}.00`, settlement_id: settlement, note: 'Вымышленное поступление банка' },
+        { external_id: `FIN-D-${index + 1}`, kind: 'bank_debit', date: `${year}-${month}-27`, amount: `${amount * (expenseMode ? 81 : 50) / 100}.00`, note: 'Вымышленный платёж поставщику; сам по себе не подтверждает налоговый расход' });
+      Object.assign(ledger.periods[index], { income_override: null, outside_income: '0.00', tax_expenses: `${expenseMode ? accumulated * 96 / 100 : 0}.00`, management_expenses: `${accumulated * (expenseMode ? 96 : 65) / 100}.00`, prior_advances: priorAdvances[index], previous_deduction: previousDeductions[index], income_confirmed: true, expenses_confirmed: true, income_note: 'Доход подтверждён только для вымышленного учебного примера.', expense_note: 'Вымышленные расходы подтверждены для обучения; собственные взносы сюда не включены.' });
+    });
+    ledger.payments.push({ id: `finance-${scenario}-fixed`, kind: 'fixed', amount: taxRules.years[String(year)].fixed_contribution, date: `${year}-12-28`, liability_year: year, confirmed: true, source: 'Вымышленный учебный платёж взносов', note: 'Только синтетический пример' });
+    if (scenario !== 'income_500k') {
+      ledger.payments.push({ id: `finance-${scenario}-usn-h1`, kind: 'usn', amount: expenseMode ? '3391.50' : '45610.00', date: `${year}-06-28`, liability_year: year, confirmed: true, source: 'Вымышленный учебный платёж УСН', note: 'Пример подтверждённой оплаты, отдельно от начисленных авансов' },
+        { id: `finance-${scenario}-usn-m9`, kind: 'usn', amount: expenseMode ? '6000.00' : '50000.00', date: `${year}-09-28`, liability_year: year, confirmed: true, source: 'Вымышленный учебный платёж УСН', note: 'Пример подтверждённой оплаты, отдельно от начисленных авансов' });
+    }
+    return { profile, ledger: userLedger(ledger), marketplace, bank };
+  }
+  async function createFinanceDemo(db, scenario) {
+    const existing = db.workspaces.find(workspace => workspace._demo_finance_scenario === scenario);
+    if (existing) return { client: existing.client, reused: true };
+    if (db.workspaces.length >= 100) throw new Error('В учебной версии допускается максимум 100 клиентов.');
+    const data = financeDemoData(scenario);
+    const workspace = { client: { ...validateProfile(data.profile), id: id(), _data_revision: 0 }, data_revision: 0, files: [], events: [], history: [], results: [], financial_drafts: {}, _demo_finance_scenario: scenario };
+    db.workspaces.push(workspace); journal(workspace, 'client_created', 'Создан отдельный вымышленный финансовый пример. Рабочая политика других клиентов не изменена.');
+    for (const source of ['marketplace', 'bank']) {
+      const rows = source === 'marketplace' ? data.marketplace : data.bank;
+      const text = csv([HEADERS, ...rows.map(row => HEADERS.map(key => row[key] || ''))]);
+      const form = new FormData(); form.set('source', source); form.set('file', new Blob([text], { type: 'text/csv' }), `${scenario}-${source}.csv`);
+      const imported = await importFile(db, workspace, form);
+      if (imported._demo_import_error) throw new Error(imported._demo_import_error);
+    }
+    workspace.financial_drafts['2026'] = { revision: 1, ledger: data.ledger };
+    journal(workspace, 'finance_updated', { year: 2026, revision: 1, reason: 'Синтетические подтверждения и начисленные авансы для учебного примера.' }, 'Учебный пример');
+    await calculateResult(workspace, { period: workspace.client.period });
+    return { client: workspace.client, reused: false };
   }
   function csvRows(text) {
     if (text.includes('\0')) throw new Error('CSV содержит недопустимые нулевые байты.');
@@ -371,6 +486,11 @@
     const url = new URL(path, 'https://browser-demo.invalid'); const method = (options.method || 'GET').toUpperCase();
     if (url.pathname === '/api/auth/me' && method === 'GET') return { auth_required: false, user: null, csrf_token: null };
     if (url.pathname === '/api/status' && method === 'GET') return { mode: 'browser_demo', ai: { enabled: false, provider: null }, format: 'accountingplus-v1', rules_version: '2026.1' };
+    if (url.pathname === '/api/tax-rules' && method === 'GET') return taxRules;
+    if (url.pathname === '/api/finance/demo' && method === 'POST') {
+      const body = jsonBody(options); unknownFields(body, ['scenario'], 'Неизвестные поля финансового учебного примера.');
+      return createFinanceDemo(db, body.scenario);
+    }
     if (url.pathname === '/api/demo-scenarios' && method === 'GET') return fixtures.scenarios;
     if (url.pathname === '/api/demo' && method === 'POST') {
       const body = jsonBody(options); unknownFields(body, ['scenario'], 'Неизвестные поля учебного примера.');
@@ -386,8 +506,8 @@
       if (method === 'POST') {
         const body = jsonBody(options); unknownFields(body, PROFILE_FIELDS, 'Неизвестные поля профиля.');
         if (db.workspaces.length >= 100) throw new Error('В учебной версии допускается максимум 100 клиентов.');
-        const profile = validateProfile({ name: '', inn: '', marketplace: 'wb', region: '', usn_rate: '6.00', vat_status: 'unknown', vat_effective_from: '2026-01-01', prior_year_income: null, ytd_income_before_period: null, income_data_complete: false, opening_balance: null, period: '2026-09', ...body });
-        const workspace = { client: { ...profile, id: id(), _data_revision: 0 }, data_revision: 0, files: [], events: [], history: [], results: [] };
+        const profile = validateProfile({ name: '', inn: '', marketplace: 'wb', region: '', usn_rate: null, vat_status: 'unknown', vat_effective_from: '2026-01-01', prior_year_income: null, ytd_income_before_period: null, income_data_complete: false, opening_balance: null, period: '2026-09', tax_regime: 'income', has_employees: null, ...body });
+        const workspace = { client: { ...profile, id: id(), _data_revision: 0 }, data_revision: 0, files: [], events: [], history: [], results: [], financial_drafts: {} };
         journal(workspace, 'client_created', 'Создан учебный профиль клиента в этом браузере.'); db.workspaces.push(workspace); return workspace.client;
       }
     }
@@ -397,6 +517,8 @@
     if (method === 'GET' && !suffix) return workspace.client;
     if (method === 'PATCH' && !suffix) return updateProfile(workspace, jsonBody(options));
     if (method === 'GET' && suffix === 'workspace') return snapshot(workspace, url.searchParams.get('period') || workspace.client.period);
+    if (method === 'GET' && suffix === 'finance') return financeSnapshot(workspace, url.searchParams.get('year') || workspace.client.period.slice(0, 4));
+    if (method === 'PUT' && suffix === 'finance') return saveFinance(workspace, jsonBody(options));
     if (method === 'POST' && suffix === 'calculate') return calculateResult(workspace, jsonBody(options));
     if (method === 'POST' && suffix === 'review') return reviewResult(workspace, jsonBody(options));
     if (method === 'POST' && suffix === 'assistant') return assistant(workspace, jsonBody(options));

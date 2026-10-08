@@ -1,9 +1,10 @@
 'use strict';
 
-const state = { clients: [], clientId: '', period: '2026-09', workspace: null, status: null, view: 'overview', busy: false, editingClient: null, editingEvent: null, reviewer: '', assistantContext: null, scenarios: [], showLegacy: false, authRequired: false, user: null, csrfToken: '' };
+const state = { clients: [], clientId: '', period: '2026-09', workspace: null, status: null, view: 'overview', busy: false, editingClient: null, editingEvent: null, reviewer: '', assistantContext: null, scenarios: [], showLegacy: false, authRequired: false, user: null, csrfToken: '', taxRules: null };
 const kinds = { sale: 'Продажа', return: 'Возврат', commission: 'Комиссия', logistics: 'Логистика', withholding: 'Удержание', payout: 'Выплата', bank_credit: 'Поступление в банк', bank_debit: 'Списание банка' };
 const viewText = {
   overview: ['Обзор периода', 'Доход, удержания и выплаты — с привязкой к исходникам.'],
+  finance: ['Финансы селлера', 'Выручка, расходы, взносы и налог — за квартал и весь год.'],
   documents: ['Документы', 'Неизменные исходники и проверка внутреннего формата.'],
   operations: ['Операции', 'Продажи, возвраты, удержания и банковские операции.'],
   reconciliation: ['Сверка выплат', 'Сопоставление отчёта маркетплейса и поступлений в банк.'],
@@ -68,6 +69,7 @@ function updateControls() {
     document.querySelectorAll('[data-mutates]').forEach((node) => { if (!['client-select', 'period-select', 'refresh-button', 'logout-button', 'assistant-submit', 'login-submit'].includes(node.id)) node.disabled = true; });
     $('upload-source').disabled = true; $('upload-replacement').disabled = true; $('upload-file').disabled = true;
   }
+  window.AccountingPlusFinance?.setBusy(state.busy);
 }
 function applySession(info) {
   state.authRequired = Boolean(info.auth_required); state.user = info.user || null; state.csrfToken = info.csrf_token || '';
@@ -145,6 +147,18 @@ function showView(view) {
   });
   $('page-title').textContent = viewText[view][0];
   $('page-description').textContent = viewText[view][1];
+  const finance = view === 'finance';
+  $('calculate').hidden = finance; $('result-status').hidden = finance; $('profile-flags').hidden = finance;
+  document.querySelectorAll('.export-panel').forEach(node => { node.hidden = finance; });
+  document.querySelector('.content-grid').classList.toggle('finance-view', finance);
+  document.querySelector('.period-picker').hidden = finance;
+  if (state.workspace) {
+    const market = state.workspace.client.marketplace === 'ozon' ? 'Ozon' : 'Wildberries';
+    $('page-eyebrow').textContent = finance ? `Годовой учёт · ${market}` : `${periodTitle(state.period)} · ${market}`;
+    $('period-note').textContent = finance ? 'Год и накопительный период выбираются в разделе ниже. Каждая сумма включает данные с начала года.' : 'При смене периода начальный остаток и доход с начала года становятся неизвестными: подтвердите их в профиле.';
+  }
+  window.AccountingPlusFinance?.activate(finance);
+  if (state.clientId) history.replaceState(null, '', `#${new URLSearchParams({ view, client: state.clientId })}`);
 }
 function isLegacyDemo(client) {
   return client.name.startsWith('Учебный ИП —') || (/^0[1-6] · /.test(client.name) && !state.scenarios.some(scenario => scenario.title === client.name));
@@ -198,8 +212,9 @@ function renderMetrics() {
     ['Расхождение с банком', metrics.payout_difference, 'Заявленные выплаты и связанные поступления']
   ];
   cards.forEach(([label, amount, note], index) => { const card = el('div', `metric-card${index === 3 && amount !== '0.00' ? ' difference' : ''}`); card.append(el('div', 'metric-label', label), el('strong', 'metric-value', money(amount, 'Недостаточно данных')), el('p', 'micro', note)); node.append(card); });
-  $('tax-amount').textContent = money(metrics.usn_tax_preliminary, 'Недостаточно данных');
-  $('tax-description').textContent = `Ставка ${state.workspace.client.usn_rate}% по профилю. Это начисление по загруженным данным периода, а не окончательный налог к уплате за квартал или год.`;
+  const expenses = state.workspace.client.tax_regime === 'income_expenses';
+  $('tax-amount').textContent = expenses ? 'В разделе «Финансы»' : money(metrics.usn_tax_preliminary, 'Недостаточно данных');
+  $('tax-description').textContent = expenses ? 'УСН «Доходы минус расходы»: подтвердите расходы в разделе «Финансы». Там рассчитываются взносы, накопительные авансы и годовой минимальный налог.' : `Ставка ${state.workspace.client.usn_rate}% по профилю. Начисление до уменьшения на взносы; итоговый аванс смотрите в разделе «Финансы».`;
   const breakdown = clear('calculation-breakdown');
   [['Продажи', 'sales'], ['Возвраты', 'returns'], ['Комиссия маркетплейса', 'commission'], ['Логистика', 'logistics'], ['Прочие удержания', 'withholding'], ['Заявленные выплаты', 'declared_payouts'], ['Остаток расчётов с маркетплейсом', 'closing_balance']].forEach(([label, key]) => { const row = el('div', 'breakdown-row'); row.append(el('dt', '', label), el('dd', '', money(metrics[key], 'Недостаточно данных'))); breakdown.append(row); });
   $('rules-label').textContent = `Правила ${result.rules_version || '—'} · версия ${result.version}`;
@@ -317,6 +332,7 @@ function render() {
     $('client-content').classList.toggle('stale-result', result?.status === 'stale');
     renderNextStep(result); renderFlags(); renderMetrics(); renderFiles(); renderEvents(); renderReconciliation(); renderIssues(); renderHistory();
   }
+  window.AccountingPlusFinance?.render();
   showView(state.view); updateControls();
 }
 function decimal(value, name, nullable = false, signed = false) {
@@ -330,7 +346,8 @@ function openProfile(client = null) {
   if (state.busy) return;
   state.editingClient = client; $('profile-form').reset();
   $('profile-dialog-title').textContent = client ? 'Профиль ИП' : 'Новый клиент';
-  const defaults = { name: '', inn: '', marketplace: 'wb', region: '', period: state.period, usn_rate: '6.00', vat_status: 'unknown', vat_effective_from: '', prior_year_income: '', ytd_income_before_period: '', opening_balance: '' };
+  const defaults = { name: '', inn: '', marketplace: 'wb', region: '', period: state.period, usn_rate: '6.00', tax_regime: 'income', has_employees: '', vat_status: 'unknown', vat_effective_from: '', prior_year_income: '', ytd_income_before_period: '', opening_balance: '' };
+  defaults.usn_rate = state.taxRules?.regimes?.income?.default_rate || '';
   for (const [name, fallback] of Object.entries(defaults)) $('profile-form').elements.namedItem(name).value = client?.[name] ?? fallback;
   $('profile-complete').checked = client?.income_data_complete || false;
   $('profile-dialog').showModal(); $('profile-name').focus();
@@ -437,6 +454,10 @@ $('profile-period').addEventListener('change', () => {
     $('profile-opening').value = ''; $('profile-ytd').value = ''; $('profile-complete').checked = false;
   }
 });
+$('profile-regime').addEventListener('change', () => {
+  const regime = $('profile-regime').value;
+  $('profile-rate').value = state.taxRules?.regimes?.[regime]?.default_rate || '';
+});
 $('profile-form').addEventListener('submit', (event) => {
   event.preventDefault();
   task(async () => {
@@ -444,10 +465,14 @@ $('profile-form').addEventListener('submit', (event) => {
     for (const key of ['name', 'inn', 'marketplace', 'region', 'period', 'vat_status', 'vat_effective_from']) profile[key] = String(data.get(key) || '').trim();
     if (!profile.name) throw new Error('Укажите название клиента.');
     profile.usn_rate = decimal(data.get('usn_rate'), 'Ставка УСН');
-    if (Number(profile.usn_rate) < 0 || Number(profile.usn_rate) > 6) throw new Error('Ставка УСН «Доходы» должна быть от 0 до 6% включительно.');
+    profile.tax_regime = String(data.get('tax_regime') || 'income');
+    profile.has_employees = data.get('has_employees') === '' ? null : data.get('has_employees') === 'true';
+    const maxRate = state.taxRules?.regimes?.[profile.tax_regime]?.max_rate;
+    if (maxRate === undefined || Number(profile.usn_rate) < 0 || Number(profile.usn_rate) > Number(maxRate)) throw new Error('Ставка УСН превышает предел выбранного режима или справочник правил недоступен.');
     for (const key of ['prior_year_income', 'ytd_income_before_period']) profile[key] = decimal(data.get(key), key === 'prior_year_income' ? 'Доход предыдущего года' : 'Доход с начала года', true);
     profile.opening_balance = decimal(data.get('opening_balance'), 'Начальный остаток', true, true);
     profile.income_data_complete = data.has('income_data_complete');
+    if (state.editingClient) profile._data_revision = state.editingClient._data_revision;
     const saved = await api(state.editingClient ? `/api/clients/${encodeURIComponent(state.editingClient.id)}` : '/api/clients', { method: state.editingClient ? 'PATCH' : 'POST', body: JSON.stringify(profile) });
     state.clients = await api('/api/clients'); await chooseClient(saved); $('profile-dialog').close();
   }, 'Профиль сохранён. Проверьте расчёт на актуальных данных.');
@@ -477,10 +502,12 @@ $('assistant-form').addEventListener('submit', (event) => { event.preventDefault
 document.querySelectorAll('[data-question]').forEach((button) => button.addEventListener('click', () => { $('assistant-question').value = button.dataset.question; askAssistant(button.dataset.question); }));
 
 async function loadApplication() {
-    const [status, clients, scenarios] = await Promise.all([api('/api/status'), api('/api/clients'), api('/api/demo-scenarios')]); state.status = status; state.clients = clients; state.scenarios = scenarios;
+    const selectedRoute = new URLSearchParams(location.hash.slice(1));
+    const [status, clients, scenarios, taxRules] = await Promise.all([api('/api/status'), api('/api/clients'), api('/api/demo-scenarios'), api('/api/tax-rules')]); state.status = status; state.clients = clients; state.scenarios = scenarios; state.taxRules = taxRules;
     $('connection-status').textContent = status.mode === 'browser_demo' ? 'Учебная версия' : status.mode === 'shared' ? 'Кабинет команды' : 'Локальный стенд'; $('connection-status').className = 'badge good';
     if (status.ai?.enabled) { $('assistant-mode').textContent = `Модель: ${status.ai.provider || 'подключена'}`; $('assistant-notice').textContent = 'Ответы модели требуют проверки бухгалтером. Расчёты выполняет отдельный модуль, исходники остаются доступны.'; }
-    if (clients.length) await chooseClient(clients.find(client => !isLegacyDemo(client)) || clients[0]); else render();
+    if (Object.hasOwn(viewText, selectedRoute.get('view'))) state.view = selectedRoute.get('view');
+    if (clients.length) await chooseClient(clients.find(client => client.id === selectedRoute.get('client')) || clients.find(client => !isLegacyDemo(client)) || clients[0]); else render();
 }
 $('login-form').addEventListener('submit', event => {
   event.preventDefault();
@@ -509,4 +536,8 @@ async function initialize() {
   if (!$('login-screen').hidden) return;
   if (!state.status) { $('connection-status').textContent = window.AccountingPlusDemo ? 'Учебная версия не открылась' : 'Нет связи с сервером'; $('connection-status').className = 'badge danger'; render(); }
 }
+window.AccountingPlusFinance?.mount({ api, task, getState: () => state,
+  refresh: async () => { state.clients = await api('/api/clients'); await loadWorkspace(); },
+  chooseClient: async client => { state.clients = await api('/api/clients'); await chooseClient(client); showView('finance'); }
+});
 initialize();

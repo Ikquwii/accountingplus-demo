@@ -254,7 +254,7 @@
       if (event.kind === 'bank_credit' && !allSettlementIds.has(get(event, 'settlement_id'))) {
         issue('unlinked_bank_credit', 'Поступление банка не связано с загруженной выплатой. Оно не включено в доход УСН автоматически.', [event]);
         reconciliation.push({ settlement_id: get(event, 'settlement_id'), expected: '0.00', received: money(event._amount), difference: money(-event._amount), status: 'unlinked', payout_event_ids: [], bank_event_ids: truth(get(event, 'id')) ? [event.id] : [] });
-      } else if (event.kind === 'bank_debit') issue('bank_debit_review', 'Списание банка сохранено для проверки. На УСН «Доходы» оно не уменьшает базу.', [event], 'warning');
+      } else if (event.kind === 'bank_debit') issue('bank_debit_review', profile.tax_regime === 'income_expenses' ? 'Списание банка сохранено для проверки. Признанные расходы для УСН вводятся отдельно в финансовом разделе.' : 'Списание банка сохранено для проверки. На УСН «Доходы» оно не уменьшает базу.', [event], 'warning');
     }
     const bankPeriodPresent = selected.some(event => event.source === 'bank');
     const matchedBankPresent = reconciliation.some(row => row.bank_event_ids.length && ['matched', 'next_period'].includes(row.status));
@@ -275,10 +275,11 @@
     let tax;
     try {
       const rate = decimal(get(profile, 'usn_rate', '6.00'));
-      if (compare(rate, cents(0n)) < 0 || compare(rate, cents(600n)) > 0) throw new Error('Некорректная ставка.');
-      tax = decimalMoney({ n: (income > 0n ? income : 0n) * rate.n, scale: rate.scale + 4, negative: rate.negative });
-    } catch (_) { issue('usn_rate_invalid', 'Не задана допустимая ставка УСН «Доходы» (0–6%).'); tax = null; }
-    issue('tax_preliminary', 'Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.', [], 'warning');
+      if (compare(rate, cents(0n)) < 0 || compare(rate, cents(profile.tax_regime === 'income_expenses' ? 1500n : 600n)) > 0) throw new Error('Некорректная ставка.');
+      tax = profile.tax_regime === 'income_expenses' ? null : decimalMoney({ n: (income > 0n ? income : 0n) * rate.n, scale: rate.scale + 4, negative: rate.negative });
+    } catch (_) { issue('usn_rate_invalid', profile.tax_regime === 'income_expenses' ? 'Не задана допустимая ставка УСН «Доходы минус расходы» (0–15%).' : 'Не задана допустимая ставка УСН «Доходы» (0–6%).'); tax = null; }
+    if (profile.tax_regime === 'income_expenses') issue('tax_income_expenses_annual', 'Налог УСН «Доходы минус расходы» рассчитывается нарастающим итогом в разделе «Финансы», с признанными расходами, взносами и годовым минимальным налогом.', [], 'warning');
+    else issue('tax_preliminary', 'Налог — предварительное начисление по доходу периода до уменьшений. Это не сумма к уплате за квартал/год.', [], 'warning');
 
     const vatStatus = get(profile, 'vat_status', 'unknown');
     const effective = get(profile, 'vat_effective_from');
@@ -321,7 +322,7 @@
 
     const metrics = { sales: money(financial.sale), returns: money(financial.return), usn_income: money(income), commission: money(financial.commission), logistics: money(financial.logistics), withholding: money(financial.withholding), expected_payout: money(expectedPayout), declared_payouts: money(financial.payout), bank_received: money(bankReceived), payout_difference: money(financial.payout - bankReceived), closing_balance: closing, usn_tax_preliminary: tax };
     const blockingCount = issues.filter(item => item.severity === 'blocking').length;
-    const explanation = `Доход УСН за ${period}: ${metrics.usn_income} ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: ${tax || 'не рассчитан'} ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: ${blockingCount}. Каждая сумма прослеживается до строк исходных файлов.`;
+    const explanation = profile.tax_regime === 'income_expenses' ? `Доход УСН за ${period}: ${metrics.usn_income} ₽. Налог режима «Доходы минус расходы» рассчитывается в разделе «Финансы» после подтверждения признанных расходов. Списание банка само по себе не подтверждает налоговый расход. Поступления банка сверяются по settlement_id. Блокирующих вопросов: ${blockingCount}.` : `Доход УСН за ${period}: ${metrics.usn_income} ₽. Комиссия, логистика и прочие удержания не уменьшают базу УСН «Доходы». Предварительный налог до уменьшений: ${tax || 'не рассчитан'} ₽. Поступления банка учитываются в сверке только по settlement_id, включая следующий период. Блокирующих вопросов: ${blockingCount}. Каждая сумма прослеживается до строк исходных файлов.`;
     return { metrics, issues, reconciliation, income_rows: incomeRows, explanation, rules_version: RULES_VERSION };
   }
 

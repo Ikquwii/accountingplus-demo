@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "rules_version": "2026.10.08",
+  "verified_date": "2026-10-08",
+  "periods": [
+    {"period": "q1", "label": "I квартал", "months": 3},
+    {"period": "h1", "label": "Полугодие", "months": 6},
+    {"period": "m9", "label": "9 месяцев", "months": 9},
+    {"period": "year", "label": "Год", "months": 12}
+  ],
+  "regimes": {
+    "income": {"default_rate": "6.00", "max_rate": "6.00"},
+    "income_expenses": {"default_rate": "15.00", "max_rate": "15.00"}
+  },
+  "additional_rate": "1.00",
+  "additional_threshold": "300000.00",
+  "minimum_tax_rate": "1.00",
+  "employees_reduction_limit": "50.00",
+  "expenses_accrual_available_from": 2025,
+  "years": {
+    "2025": {
+      "fixed_contribution": "53658.00",
+      "additional_cap": "300888.00",
+      "vat_exemption_threshold": "60000000.00",
+      "additional_expenses_base_supported": false
+    },
+    "2026": {
+      "fixed_contribution": "57390.00",
+      "additional_cap": "321818.00",
+      "vat_exemption_threshold": "20000000.00",
+      "additional_expenses_base_supported": true
+    }
+  },
+  "sources": [
+    {"id": "contributions_2026", "title": "ФНС: фиксированные и дополнительные взносы ИП за 2026 год", "url": "https://www.nalog.gov.ru/rn16/news/tax_doc_news/16617063/", "verified_date": "2026-10-08"},
+    {"id": "contributions_2025", "title": "ФНС: памятка предпринимателям — взносы за 2025 год", "url": "https://www.nalog.gov.ru/html/sites/www.rn16.nalog.ru/r2024/Doki/IPSV_2025.pdf", "verified_date": "2026-10-08"},
+    {"id": "income_deduction", "title": "ФНС: авансы УСН и уменьшение на страховые взносы", "url": "https://www.nalog.gov.ru/rn70/news/seminar/16620047/", "verified_date": "2026-10-08"},
+    {"id": "expenses_accrual", "title": "ФНС: признание собственных взносов в расходах с 2025 года", "url": "https://www.nalog.gov.ru/rn16/news/tax_doc_news/15495114/", "verified_date": "2026-10-08"},
+    {"id": "additional_expenses_base", "title": "ФНС: изменения базы дополнительных взносов с 2026 года", "url": "https://www.nalog.gov.ru/html/sites/www.rn92.nalog.ru/24122025_NDFL%20SV.pdf", "verified_date": "2026-10-08"},
+    {"id": "nk_430_base", "title": "НК РФ, статья 430, пункт 9, подпункт 3.1: расходы без собственных взносов", "url": "https://www.consultant.ru/document/cons_doc_LAW_28165/c03008a92ccba28226abe4034e9aa43e3a2ffeb4/", "verified_date": "2026-10-08"},
+    {"id": "usn_minimum", "title": "ФНС: УСН, ставки и годовой минимальный налог", "url": "https://www.nalog.gov.ru/rn10/taxation/taxes/usn/", "verified_date": "2026-10-08"},
+    {"id": "vat_thresholds", "title": "ФНС: освобождение от НДС на УСН по годам", "url": "https://www.nalog.gov.ru/rn77/taxation/taxes/nds_usn/", "verified_date": "2026-10-08"},
+    {"id": "marketplace_tax_dates", "title": "ФНС: валовой доход селлера и даты признания", "url": "https://www.nalog.gov.ru/rn03/news/activities_fts/16317578/", "verified_date": "2026-10-08"}
+  ]
+}

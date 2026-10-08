@@ -3,6 +3,7 @@ document.getElementById('reset-demo').addEventListener('click', async () => {
   if (!confirm('Вернуть все учебные примеры к исходному состоянию? Ваши исправления, клиенты и загруженные учебные файлы в этом браузере будут удалены.')) return;
   try {
     await window.AccountingPlusDemo.reset();
+    history.replaceState(null, '', location.pathname + location.search);
     location.reload();
   } catch (error) {
     document.getElementById('demo-storage-error').textContent = error.message;

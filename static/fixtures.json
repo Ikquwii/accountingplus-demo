@@ -92,6 +92,7 @@
     {
       "client": {
         "_data_revision": 2,
+        "has_employees": null,
         "id": "demo-000001",
         "income_data_complete": true,
         "inn": "",
@@ -101,6 +102,7 @@
         "period": "2026-09",
         "prior_year_income": "0.00",
         "region": "Учебный регион",
+        "tax_regime": "income",
         "usn_rate": "6.00",
         "vat_effective_from": "2026-01-01",
         "vat_status": "exempt",
@@ -347,6 +349,7 @@
     {
       "client": {
         "_data_revision": 2,
+        "has_employees": null,
         "id": "demo-000014",
         "income_data_complete": true,
         "inn": "",
@@ -356,6 +359,7 @@
         "period": "2026-09",
         "prior_year_income": "0.00",
         "region": "Учебный регион",
+        "tax_regime": "income",
         "usn_rate": "6.00",
         "vat_effective_from": "2026-01-01",
         "vat_status": "exempt",
@@ -637,6 +641,7 @@
     {
       "client": {
         "_data_revision": 2,
+        "has_employees": null,
         "id": "demo-000028",
         "income_data_complete": true,
         "inn": "",
@@ -646,6 +651,7 @@
         "period": "2026-09",
         "prior_year_income": "0.00",
         "region": "Учебный регион",
+        "tax_regime": "income",
         "usn_rate": "6.00",
         "vat_effective_from": "2026-01-01",
         "vat_status": "exempt",
@@ -913,6 +919,7 @@
     {
       "client": {
         "_data_revision": 2,
+        "has_employees": null,
         "id": "demo-000041",
         "income_data_complete": true,
         "inn": "",
@@ -922,6 +929,7 @@
         "period": "2026-09",
         "prior_year_income": "0.00",
         "region": "Учебный регион",
+        "tax_regime": "income",
         "usn_rate": "6.00",
         "vat_effective_from": "2026-01-01",
         "vat_status": "exempt",
@@ -1189,6 +1197,7 @@
     {
       "client": {
         "_data_revision": 2,
+        "has_employees": null,
         "id": "demo-000054",
         "income_data_complete": true,
         "inn": "",
@@ -1198,6 +1207,7 @@
         "period": "2026-09",
         "prior_year_income": "0.00",
         "region": "Учебный регион",
+        "tax_regime": "income",
         "usn_rate": "6.00",
         "vat_effective_from": "2026-01-01",
         "vat_status": "exempt",
@@ -1479,6 +1489,7 @@
     {
       "client": {
         "_data_revision": 2,
+        "has_employees": null,
         "id": "demo-000068",
         "income_data_complete": true,
         "inn": "",
@@ -1488,6 +1499,7 @@
         "period": "2026-09",
         "prior_year_income": null,
         "region": "Учебный регион",
+        "tax_regime": "income",
         "usn_rate": "6.00",
         "vat_effective_from": "2026-01-01",
         "vat_status": "exempt",
