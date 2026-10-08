@@ -1,17 +1,17 @@
-/* Team entry and practice catalogue share the cabinet's blue visual system. */
+/* Team entry and practice catalogue share the cabinet's Pacific Breeze visual system. */
 .login-screen { min-height:100dvh; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:20px; background:var(--bg); }
 .login-story { display:flex; flex-direction:column; min-width:0; padding:38px 46px 30px; border-radius:20px; background:var(--accent); color:white; }
 .login-story-top { font-size:19px; font-weight:600; letter-spacing:-.025em; }
-.login-story-top span { display:block; font-size:12px; font-weight:400; letter-spacing:0; margin-top:7px; color:#e2ebff; }
+.login-story-top span { display:block; font-size:12px; font-weight:400; letter-spacing:0; margin-top:7px; color:#eeedff; }
 .login-illustration { width:min(100%,390px); margin:45px auto 20px; }
 .login-illustration svg { display:block; width:100%; height:auto; }
 .login-story h2 { font-size:38px; line-height:1.14; letter-spacing:-.035em; font-weight:600; }
-.login-story > p { margin-top:16px; font-size:14px; line-height:1.6; color:#e2ebff; max-width:45ch; }
-.login-story-bottom { display:flex; justify-content:space-between; gap:16px; margin-top:auto; padding-top:45px; font-size:11px; color:#e2ebff; }
+.login-story > p { margin-top:16px; font-size:14px; line-height:1.6; color:#eeedff; max-width:45ch; }
+.login-story-bottom { display:flex; justify-content:space-between; gap:16px; margin-top:auto; padding-top:45px; font-size:11px; color:#eeedff; }
 .login-form-side { display:grid; place-items:center; padding:38px; min-width:0; }
 .login-card { width:min(100%,390px); }
 .login-card .brand { margin-bottom:59px; font-size:21px; }
-.login-card .brand-mark, .login-card .brand-mark svg { width:42px; height:42px; }
+.login-card .brand-mark, .login-card .brand-mark img { width:42px; height:42px; }
 .login-card .brand-plus { font-size:15px; }
 .login-kicker { color:var(--accent); font-size:13px; margin-bottom:12px; }
 .login-card h1 { font-size:35px; margin-bottom:13px; }
