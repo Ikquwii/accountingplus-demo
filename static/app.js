@@ -3,9 +3,9 @@
 const state = { clients: [], clientId: '', period: '2026-09', workspace: null, status: null, view: 'overview', busy: false, editingClient: null, editingEvent: null, reviewer: '', assistantContext: null, scenarios: [], showLegacy: false, authRequired: false, user: null, csrfToken: '', taxRules: null };
 const kinds = { sale: 'Продажа', return: 'Возврат', commission: 'Комиссия', logistics: 'Логистика', withholding: 'Удержание', payout: 'Выплата', bank_credit: 'Поступление в банк', bank_debit: 'Списание банка' };
 const viewText = {
-  overview: ['Обзор периода', 'Доход, удержания и выплаты — с привязкой к исходникам.'],
+  overview: ['Результат месяца', 'Доход, удержания и выплаты — с привязкой к исходникам.'],
   finance: ['Финансы селлера', 'Выручка, расходы, взносы и налог — за квартал и весь год.'],
-  documents: ['Документы', 'Неизменные исходники и проверка внутреннего формата.'],
+  documents: ['Документы месяца', 'Загрузите комплект, проверьте распознавание и перейдите к вопросам.'],
   operations: ['Операции', 'Продажи, возвраты, удержания и банковские операции.'],
   reconciliation: ['Сверка выплат', 'Сопоставление отчёта маркетплейса и поступлений в банк.'],
   review: ['Проверка бухгалтера', 'Вопросы, исправления и утверждение конкретной версии.'],
@@ -13,7 +13,7 @@ const viewText = {
 };
 const resultLabels = { calculated: ['Рассчитано · черновик', 'neutral'], reviewed: ['Проверено бухгалтером', 'good'], approved: ['Черновик утверждён', 'good'], stale: ['Нужно пересчитать', 'warning'] };
 const reconciliationLabels = { matched: ['Сопоставлено', 'good'], partial: ['Частичная выплата', 'warning'], missing: ['Нет поступления', 'warning'], overpaid: ['Поступило больше', 'warning'], next_period: ['Поступление позже', 'neutral'], unlinked: ['Нет связи', 'warning'] };
-const historyLabels = { client_created: 'Создан профиль', profile_updated: 'Изменён профиль', file_imported: 'Загружен файл', file_failed: 'Ошибка загрузки', file_replaced: 'Заменён файл', event_updated: 'Исправлена операция', calculated: 'Рассчитан период', result_calculated: 'Рассчитан период', result_created: 'Сохранён расчёт', review: 'Проверено бухгалтером', approve: 'Утверждён черновик', reviewed: 'Проверено бухгалтером', approved: 'Утверждён черновик', result_reviewed: 'Проверено бухгалтером', result_approved: 'Утверждён черновик' };
+const historyLabels = { tax_profile_updated: 'Обновлены настройки года', finance_updated: 'Сохранена версия финансов', records_updated: 'Обновлены дополнительные операции', assessment_approved: 'Утверждено начисление', client_created: 'Создан профиль', profile_updated: 'Изменён профиль', file_imported: 'Загружен файл', file_failed: 'Ошибка загрузки', file_replaced: 'Заменён файл', event_updated: 'Исправлена операция', calculated: 'Рассчитан период', result_calculated: 'Рассчитан период', result_created: 'Сохранён расчёт', review: 'Проверено бухгалтером', approve: 'Утверждён черновик', reviewed: 'Проверено бухгалтером', approved: 'Утверждён черновик', result_reviewed: 'Проверено бухгалтером', result_approved: 'Утверждён черновик' };
 const $ = (id) => document.getElementById(id);
 
 function el(tag, className, content) {
@@ -63,11 +63,11 @@ function updateControls() {
   document.querySelectorAll('[data-question]').forEach((node) => { node.disabled = state.busy || !hasClient; });
   $('upload-source').disabled = state.busy;
   $('upload-replacement').disabled = state.busy;
-  $('upload-file').disabled = state.busy;
+  $('upload-file').disabled = state.busy; $('upload-confirm').disabled = state.busy;
   $('main').setAttribute('aria-busy', String(state.busy));
   if (state.user?.role === 'viewer') {
     document.querySelectorAll('[data-mutates]').forEach((node) => { if (!['client-select', 'period-select', 'refresh-button', 'logout-button', 'assistant-submit', 'login-submit'].includes(node.id)) node.disabled = true; });
-    $('upload-source').disabled = true; $('upload-replacement').disabled = true; $('upload-file').disabled = true;
+    $('upload-source').disabled = true; $('upload-replacement').disabled = true; $('upload-file').disabled = true; $('upload-confirm').disabled = true;
   }
   window.AccountingPlusFinance?.setBusy(state.busy);
 }
@@ -97,13 +97,14 @@ async function api(path, options = {}) {
   catch { throw new Error(location.hostname === '127.0.0.1' || location.hostname === 'localhost' ? 'Нет связи с кабинетом на этом компьютере. Сервер должен быть запущен; после запуска обновите страницу.' : 'Пропала связь с кабинетом. Обновите страницу через минуту. Если вы сохраняли изменения, проверьте историю перед повтором.'); }
   const contentType = response.headers.get('content-type') || '';
   if (!response.ok) {
+    let current;
     let detail = [502, 503, 504].includes(response.status) ? 'Кабинет временно недоступен. Обновите страницу через минуту. Если вы сохраняли изменения, проверьте историю перед повтором.' : `Не удалось выполнить действие (код ${response.status}).`;
     if (contentType.includes('application/json')) {
-      try { const body = await response.json(); if (typeof body.detail === 'string') detail = body.detail; }
+      try { const body = await response.json(); if (typeof body.detail === 'string') detail = body.detail; current = body.current; }
       catch { /* The HTTP status remains available when the error body is not JSON. */ }
     }
     if (response.status === 401 && path !== '/api/auth/login') showLogin();
-    const error = new Error(detail); error.status = response.status; throw error;
+    const error = new Error(detail); error.status = response.status; error.current = current; throw error;
   }
   if (!contentType.includes('application/json')) throw new Error('Приложение вернуло неожиданный ответ. Повторите действие после проверки сервера.');
   return response.json();
@@ -155,7 +156,7 @@ function showView(view) {
   if (state.workspace) {
     const market = state.workspace.client.marketplace === 'ozon' ? 'Ozon' : 'Wildberries';
     $('page-eyebrow').textContent = finance ? `Годовой учёт · ${market}` : `${periodTitle(state.period)} · ${market}`;
-    $('period-note').textContent = finance ? 'Год и накопительный период выбираются в разделе ниже. Каждая сумма включает данные с начала года.' : 'При смене периода начальный остаток и доход с начала года становятся неизвестными: подтвердите их в профиле.';
+    $('period-note').textContent = finance ? 'Год и накопительный период выбираются в разделе ниже. Каждая сумма включает данные с начала года.' : 'Выбор месяца меняет только просмотр. Сохранённые сведения и утверждённые версии остаются в истории.';
   }
   window.AccountingPlusFinance?.activate(finance);
   if (state.clientId) history.replaceState(null, '', `#${new URLSearchParams({ view, client: state.clientId })}`);
@@ -175,6 +176,7 @@ function renderClients() {
 async function loadWorkspace() {
   if (!state.clientId) { state.workspace = null; render(); return; }
   state.workspace = await api(clientUrl(`/workspace?period=${encodeURIComponent(state.period)}`));
+  try { state.annual = await api(clientUrl(`/finance?year=${state.period.slice(0,4)}`)); } catch(error) { state.annual = null; notify(`Месяц открыт; годовой расчёт недоступен: ${error.message}`, true); }
   const index = state.clients.findIndex((client) => client.id === state.clientId);
   if (index >= 0) state.clients[index] = state.workspace.client;
   render();
@@ -182,7 +184,8 @@ async function loadWorkspace() {
 async function chooseClient(client) {
   const period = client.period || '2026-09';
   const workspace = await api(`/api/clients/${encodeURIComponent(client.id)}/workspace?period=${encodeURIComponent(period)}`);
-  state.clientId = client.id; state.period = period; state.workspace = workspace;
+  state.clientId = client.id; state.period = period; state.workspace = workspace; state.annual = null;
+  try { state.annual = await api(clientUrl(`/finance?year=${period.slice(0,4)}`)); } catch(error) { notify(`Годовой расчёт недоступен: ${error.message}`, true); }
   $('period-select').value = state.period;
   $('assistant-answer').hidden = true;
   $('review-comment').value = ''; $('event-search').value = ''; $('event-filter').value = '';
@@ -208,13 +211,13 @@ function renderMetrics() {
   const cards = [
     ['Доход для УСН', metrics.usn_income, 'По датам признания; при вопросах — предварительно'],
     ['Ожидаемая выплата', metrics.expected_payout, 'Продажи − возвраты − удержания'],
-    ['Поступило в банк', metrics.bank_received, 'Связанные выплаты, включая более поздние поступления'],
-    ['Расхождение с банком', metrics.payout_difference, 'Заявленные выплаты и связанные поступления']
+    ['Поступило в банк за месяц', state.annual?.monthly?.find(row=>row.month===state.period)?.bank_received ?? null, 'Все поступления выписки; связь с выплатами проверяется отдельно'],
+    ['Расхождение подтверждённых выплат', state.workspace.events.some(event=>event.kind==='payout'&&event.date?.startsWith(state.period)) ? metrics.payout_difference : null, 'Без документа о выплате расхождение не определено']
   ];
   cards.forEach(([label, amount, note], index) => { const card = el('div', `metric-card${index === 3 && amount !== '0.00' ? ' difference' : ''}`); card.append(el('div', 'metric-label', label), el('strong', 'metric-value', money(amount, 'Недостаточно данных')), el('p', 'micro', note)); node.append(card); });
   const expenses = state.workspace.client.tax_regime === 'income_expenses';
-  $('tax-amount').textContent = expenses ? 'В разделе «Финансы»' : money(metrics.usn_tax_preliminary, 'Недостаточно данных');
-  $('tax-description').textContent = expenses ? 'УСН «Доходы минус расходы»: подтвердите расходы в разделе «Финансы». Там рассчитываются взносы, накопительные авансы и годовой минимальный налог.' : `Ставка ${state.workspace.client.usn_rate}% по профилю. Начисление до уменьшения на взносы; итоговый аванс смотрите в разделе «Финансы».`;
+  $('tax-amount').textContent = 'В разделе «Финансы»';
+  $('tax-description').textContent = expenses ? 'УСН «Доходы минус расходы»: подтвердите расходы в разделе «Финансы». Там рассчитываются взносы, накопительные авансы и годовой минимальный налог.' : 'Месяц показывает продажи и движение денег. Налог и взносы рассчитываются с начала года по отдельному профилю в разделе «Финансы».';
   const breakdown = clear('calculation-breakdown');
   [['Продажи', 'sales'], ['Возвраты', 'returns'], ['Комиссия маркетплейса', 'commission'], ['Логистика', 'logistics'], ['Прочие удержания', 'withholding'], ['Заявленные выплаты', 'declared_payouts'], ['Остаток расчётов с маркетплейсом', 'closing_balance']].forEach(([label, key]) => { const row = el('div', 'breakdown-row'); row.append(el('dt', '', label), el('dd', '', money(metrics[key], 'Недостаточно данных'))); breakdown.append(row); });
   $('rules-label').textContent = `Правила ${result.rules_version || '—'} · версия ${result.version}`;
@@ -236,7 +239,7 @@ function renderMetrics() {
 function renderFiles() {
   const files = state.workspace.files || []; const node = clear('files-table');
   $('file-count').textContent = `${files.length} файлов`;
-  if (!files.length) node.append(el('p', 'empty-message', 'Пока нет файлов. Загрузите внутренний CSV/XLSX или начните с учебного месяца.'));
+  if (!files.length) node.append(el('p', 'empty-message', 'Пока нет файлов. Загрузите поддерживаемый комплект или начните с учебного месяца.'));
   else node.append(table(['Файл / источник', 'Строки', 'Состояние', 'Загружен'], files.map((file) => {
     const name = el('div'); const link = el('a', '', file.filename); link.href = fileUrl(file.id); link.download = file.filename; name.append(link, el('span', 'cell-subtitle', file.source === 'bank' ? 'Банк' : 'Маркетплейс'));
     const status = el('div'); status.append(badge({ imported: 'Загружен', failed: 'Ошибка', replaced: 'Заменён' }[file.status] || file.status, file.status === 'failed' ? 'danger' : file.status === 'imported' ? 'good' : 'neutral')); if (file.error) status.append(el('span', 'cell-subtitle', file.error));
@@ -247,8 +250,8 @@ function renderFiles() {
 function renderReplacementOptions() {
   const previous = $('upload-replacement').value; const select = clear('upload-replacement');
   const base = el('option', '', 'Новая загрузка'); base.value = ''; select.append(base);
-  const source = $('upload-source').value;
-  for (const file of state.workspace?.files || []) if (file.status === 'imported' && file.source === source) { const option = el('option', '', file.filename); option.value = file.id; select.append(option); }
+  const selectedSource = $('upload-source').value; const source = selectedSource === 'auto' ? 'marketplace' : selectedSource;
+  for (const file of state.workspace?.files || []) if (file.status === 'imported' && (source === 'auto' || file.source === source)) { const option = el('option', '', file.filename); option.value = file.id; select.append(option); }
   if ([...select.options].some((option) => option.value === previous)) select.value = previous;
   $('template-csv').href = window.AccountingPlusDemo ? window.AccountingPlusDemo.templateUrl(source, 'csv') : `/api/templates/${encodeURIComponent(source)}?format=csv`;
   $('template-csv').download = `accountingPLUS-${source}.csv`;
@@ -303,7 +306,8 @@ function renderHistory() {
   if (!history.length) { node.append(el('p', 'empty-message', 'История изменений пока пуста.')); return; }
   for (const entry of [...history].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))) {
     const item = el('div', 'history-item'); const content = el('div'); content.append(el('strong', '', historyLabels[entry.action] || 'Изменение в рабочем кабинете'));
-    if (entry.detail) content.append(el('p', '', typeof entry.detail === 'string' ? entry.detail : JSON.stringify(entry.detail, null, 2)));
+    if (entry.detail) content.append(el('p', '', typeof entry.detail === 'string' ? entry.detail : entry.detail.reason || `Год ${entry.detail.year || '—'} · версия ${entry.detail.revision || '—'}`));
+    if(entry.result_id){const button=el('button','text-button','Открыть сохранённый снимок расчёта');button.type='button';button.addEventListener('click',()=>task(async()=>{const snapshot=await api(clientUrl(`/results/${encodeURIComponent(entry.result_id)}`));const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'}));const link=el('a');link.href=url;link.download=`accountingplus-${snapshot.period}-v${snapshot.version}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}));content.append(button);}
     content.append(el('span', 'micro', `${date(entry.created_at, true)}${entry.reviewer ? ` · ${entry.reviewer}` : ''}`)); item.append(content); node.append(item);
   }
 }
@@ -318,6 +322,35 @@ function renderNextStep(result) {
   $('next-step-action').firstChild.textContent = reviewed && !blocking ? 'К утверждению ' : 'К проверке ';
 }
 
+
+function exactMoneySum(values) {
+  let total=0n;for(const value of values){if(value==null)return null;const match=String(value).match(/^(-?)(\d+)(?:\.(\d{1,2}))?$/);if(!match)return null;total+=(match[1]?-1n:1n)*(BigInt(match[2])*100n+BigInt((match[3]||'').padEnd(2,'0')));}
+  const absolute=total<0n?-total:total;return `${total<0n?'-':''}${absolute/100n}.${String(absolute%100n).padStart(2,'0')}`;
+}
+function renderMonthlyProfit(){
+  const node=clear('monthly-profit'),month=state.annual?.monthly?.find(row=>row.month===state.period);
+  node.append(el('h2','','Продажи и прибыль месяца'));
+  if(!month){node.append(el('p','','Для результата нужны доступные документы и годовой реестр.'));return;}
+  const revenue=exactMoneySum([month.revenue,month.outside_revenue||'0.00']);
+  const costs=exactMoneySum([month.costs,month.additional_expenses||'0.00']);
+  const complete=month.income_complete===true&&month.management_complete===true;
+  const profit=complete?exactMoneySum([revenue,costs==null?null:`-${costs}`]):null;
+  const list=el('dl','calculation-breakdown');
+  for(const [label,value]of [['Продажи после возвратов · из документов',month.revenue],['Удержания маркетплейса · из документов',month.costs],['Дополнительные расходы · из реестра',month.additional_expenses??null],['Прибыль до налогов',profit]]){const row=el('div','breakdown-row');row.append(el('dt','',label),el('dd','',money(value,'Нужно подтвердить полноту месяца')));list.append(row);}node.append(list);
+  if(!complete)node.append(el('p','micro','Известные продажи и удержания показаны. Для полной прибыли подтвердите остальные доходы и расходы месяца в разделе «Финансы → Документы и дополнительные операции».'));
+  const details=el('details'),summary=el('summary','','Посмотреть строки продаж и удержаний');details.append(summary);
+  const events=state.workspace.events.filter(event=>event.source==='marketplace'&&event.date?.startsWith(state.period)&&['sale','return','commission','logistics','withholding'].includes(event.kind));
+  details.append(table(['Операция','Сумма','Источник'],events.map(event=>[kinds[event.kind],{text:money(event.amount),className:'money'},{node:sourceLink(event)}])));node.append(details);
+}
+function renderWorkflow() {
+  const files = state.workspace.files.filter(file => file.status === 'imported');
+  const result = state.workspace.result;
+  const missing = ['marketplace','bank'].filter(source => !files.some(file => file.source === source));
+  const questions = (result?.issues || []).filter(issue => issue.severity === 'blocking').length;
+  $('workflow-state').textContent = missing.length ? 'Нужны документы' : !result || result.status === 'stale' ? 'Нужен пересчёт' : questions ? `Есть вопросы: ${questions}` : ['reviewed','approved'].includes(result.status) ? 'Проверен' : 'Черновик рассчитан';
+  $('workflow-next').textContent = missing.length ? `Добавьте ${missing.map(source=>source==='bank'?'выписку банка':'отчёт маркетплейса').join(' и ')}.` : questions ? 'Уточните вопросы со ссылками на исходники.' : 'Проверьте результат и подтвердите конкретную версию.';
+}
+
 function render() {
   if (state.assistantContext && state.assistantContext !== assistantContext()) {
     $('assistant-answer').hidden = true; state.assistantContext = null;
@@ -327,10 +360,10 @@ function render() {
   if (state.workspace) {
     const client = state.workspace.client; const result = state.workspace.result; const label = result ? resultLabels[result.status] || [result.status, 'neutral'] : ['Не рассчитано', 'neutral'];
     $('page-eyebrow').textContent = `${periodTitle(state.period)} · ${client.marketplace === 'ozon' ? 'Ozon' : 'Wildberries'}`;
-    $('period-note').textContent = 'При смене периода начальный остаток и доход с начала года становятся неизвестными: подтвердите их в профиле.';
+    $('period-note').textContent = 'Выбор месяца меняет только просмотр. Сохранённые сведения и утверждённые версии остаются в истории.';
     $('result-status').textContent = label[0]; $('result-status').className = `badge ${label[1]}`;
     $('client-content').classList.toggle('stale-result', result?.status === 'stale');
-    renderNextStep(result); renderFlags(); renderMetrics(); renderFiles(); renderEvents(); renderReconciliation(); renderIssues(); renderHistory();
+    renderWorkflow(); renderMonthlyProfit(); renderNextStep(result); renderFlags(); renderMetrics(); renderFiles(); renderEvents(); renderReconciliation(); renderIssues(); renderHistory();
   }
   window.AccountingPlusFinance?.render();
   showView(state.view); updateControls();
@@ -350,11 +383,13 @@ function openProfile(client = null) {
   defaults.usn_rate = state.taxRules?.regimes?.income?.default_rate || '';
   for (const [name, fallback] of Object.entries(defaults)) $('profile-form').elements.namedItem(name).value = client?.[name] ?? fallback;
   $('profile-complete').checked = client?.income_data_complete || false;
+  $('profile-details').open = Boolean(client);
+  for(const id of ['profile-region','profile-regime','profile-rate','profile-employees','profile-vat','profile-vat-date','profile-prior-income'])$(id).closest('.field').hidden=true;
   $('profile-dialog').showModal(); $('profile-name').focus();
 }
 function openEvent(event) {
   if (state.busy) return;
-  state.editingEvent = event; $('event-form').reset(); $('event-dialog-title').textContent = event.external_id;
+  state.editingEvent = event; $('event-conflict').replaceChildren(); $('event-conflict').hidden = true; $('event-form').reset(); $('event-dialog-title').textContent = event.external_id;
   const original = clear('event-original'); original.append(el('strong', '', `${money(event.amount)} · ${date(event.date)}`), el('p', '', `Исходный тип: ${event.original_kind || event.kind}. Сумма и файл сохраняются.`), sourceLink(event));
   const select = clear('edit-kind'); const supported = event.source === 'bank' ? ['bank_credit', 'bank_debit'] : ['sale', 'return', 'commission', 'logistics', 'withholding', 'payout'];
   if (!supported.includes(event.kind)) supported.unshift(event.kind);
@@ -424,30 +459,56 @@ $('client-select').addEventListener('change', () => task(async () => {
 $('period-select').addEventListener('change', () => {
   const selected = $('period-select').value; if (!selected || selected === state.period || !state.clientId) return;
   task(async () => {
-    if (!state.authRequired) await api(clientUrl(''), { method: 'PATCH', body: JSON.stringify({ period: selected, opening_balance: null, ytd_income_before_period: null, income_data_complete: false }) });
     state.period = selected; $('assistant-answer').hidden = true; await loadWorkspace();
-  }, 'Период изменён. Подтвердите начальный остаток и доход с начала года в профиле.').finally(() => { $('period-select').value = state.period; });
+  }, 'Открыт выбранный месяц. Сохранённые данные не изменены.').finally(() => { $('period-select').value = state.period; });
 });
 $('calculate').addEventListener('click', () => task(async () => {
   await api(clientUrl('/calculate'), { method: 'POST', body: JSON.stringify({ period: state.period }) }); await loadWorkspace();
 }, 'Расчёт сохранён. Проверьте вопросы и исходные строки.'));
 $('upload-source').addEventListener('change', renderReplacementOptions);
-$('upload-form').addEventListener('submit', (event) => {
-  event.preventDefault(); if (!state.clientId) return;
-  const form = new FormData($('upload-form'));
-  if (!form.get('replaces_file_id')) form.delete('replaces_file_id');
-  task(async () => {
-    let response;
-    try { response = await api(clientUrl('/files'), { method: 'POST', body: form }); }
-    catch (error) {
-      try { await loadWorkspace(); }
-      catch (refreshError) { error.message += ` Не удалось обновить список документов: ${refreshError.message}`; }
-      throw error;
+let uploadPreview = [];
+function resetUploadPreview(){uploadPreview=[];$('upload-preview').replaceChildren();$('upload-confirm').hidden=true;}
+$('upload-file').addEventListener('change',resetUploadPreview);
+$('upload-source').addEventListener('change',resetUploadPreview);
+$('upload-account').addEventListener('input',resetUploadPreview);
+$('upload-replacement').addEventListener('change',resetUploadPreview);
+$('upload-form').addEventListener('submit', event => {
+  event.preventDefault(); if(!state.clientId)return;
+  task(async()=>{
+    resetUploadPreview();
+    const files=[...$('upload-file').files];if(!files.length)throw new Error('Выберите файлы комплекта.');
+    if(files.length>20)throw new Error('За один раз можно проверить до 20 файлов.');
+    const replacement=$('upload-replacement').value;
+    if(replacement&&files.length!==1)throw new Error('Исправленный документ заменяется отдельно. Выберите один файл.');
+    const proposals=[];
+    for(const file of files){
+      const form=new FormData();form.set('file',file);form.set('source',$('upload-source').value);if((await file.slice(0,128).text()).trim().startsWith('['))form.set('account_id',$('upload-account').value.trim());
+      const proposal=await api(clientUrl('/files/preview'),{method:'POST',body:form});
+      proposals.push({file,proposal,replacement});
     }
-    $('upload-file').value = ''; await loadWorkspace();
-    notify(response.duplicate ? 'Этот файл уже загружен. Операции не добавлены повторно.' : `Файл загружен: ${response.imported_count} операций. Рассчитайте период заново.`);
+    uploadPreview=proposals;
+    const node=$('upload-preview');
+    for(const {file,proposal} of proposals){const item=el('article','notice info');item.append(el('strong','',file.name),el('p','',`${proposal.source==='bank'?'Банк':'Маркетплейс'} · ${proposal.adapter} · ${proposal.events.length} операций · ${(proposal.periods||[]).map(periodTitle).join(', ')||'Период не определён'}`));
+      if(proposal.account_id)item.append(el('p','micro',`Кабинет / счёт: ${proposal.account_id}`));
+      for(const warning of proposal.warnings||[])item.append(el('p','',typeof warning==='string'?warning:warning.message||String(warning)));
+      const details=el('details'),summary=el('summary','','Первые строки распознанного документа');details.append(summary);
+      details.append(table(['Дата','Операция','Сумма'],proposal.events.slice(0,10).map(row=>[date(row.date),kinds[row.kind]||row.kind,{text:money(row.amount),className:'money'}])));item.append(details);node.append(item);
+    }
+    $('upload-confirm').hidden=false;notify('Комплект распознан. Проверьте сведения и подтвердите загрузку. Данные пока не изменены.');
   });
 });
+$('upload-confirm').addEventListener('click',()=>task(async()=>{
+  if(!uploadPreview.length)throw new Error('Сначала проверьте комплект.');
+  const batch=uploadPreview.slice(),results=[];
+  for(const {file,proposal,replacement} of batch){
+    const form=new FormData();form.set('file',file);form.set('source',proposal.source);if(proposal.account_id)form.set('account_id',proposal.account_id);if(replacement)form.set('replaces_file_id',replacement);
+    try{const response=await api(clientUrl('/files'),{method:'POST',body:form});results.push(`${file.name}: ${response.duplicate?'уже загружен':`${response.imported_count} операций`}`);}
+    catch(error){await loadWorkspace();throw new Error(`${results.length?`Сохранено файлов: ${results.length}. `:''}${file.name}: ${error.message} Остальные файлы не загружены; повторная проверка комплекта безопасна.`);}
+  }
+  await api(clientUrl('/calculate'),{method:'POST',body:JSON.stringify({period:state.period})});
+  resetUploadPreview();$('upload-file').value='';await loadWorkspace();showView('review');
+  notify(`Файлы загружены, черновик пересчитан. ${results.join('; ')}`);
+}));
 $('event-search').addEventListener('input', renderEvents); $('event-filter').addEventListener('change', renderEvents);
 $('profile-period').addEventListener('change', () => {
   if (state.editingClient && $('profile-period').value !== state.editingClient.period) {
@@ -472,9 +533,9 @@ $('profile-form').addEventListener('submit', (event) => {
     for (const key of ['prior_year_income', 'ytd_income_before_period']) profile[key] = decimal(data.get(key), key === 'prior_year_income' ? 'Доход предыдущего года' : 'Доход с начала года', true);
     profile.opening_balance = decimal(data.get('opening_balance'), 'Начальный остаток', true, true);
     profile.income_data_complete = data.has('income_data_complete');
-    if (state.editingClient) profile._data_revision = state.editingClient._data_revision;
+    if (state.editingClient) { profile._data_revision = state.editingClient._data_revision; for(const key of ['region','tax_regime','usn_rate','has_employees','vat_status','vat_effective_from','prior_year_income'])delete profile[key]; }
     const saved = await api(state.editingClient ? `/api/clients/${encodeURIComponent(state.editingClient.id)}` : '/api/clients', { method: state.editingClient ? 'PATCH' : 'POST', body: JSON.stringify(profile) });
-    state.clients = await api('/api/clients'); await chooseClient(saved); $('profile-dialog').close();
+    state.clients = await api('/api/clients'); await chooseClient(saved); $('profile-dialog').close(); showView('documents');
   }, 'Профиль сохранён. Проверьте расчёт на актуальных данных.');
 });
 $('event-form').addEventListener('submit', (event) => {
@@ -484,10 +545,28 @@ $('event-form').addEventListener('submit', (event) => {
     for (const key of ['kind', 'tax_date', 'settlement_id', 'related_id', 'note', 'reviewer', 'reason']) payload[key] = String(data.get(key) || '').trim();
     if (!payload.reviewer || !payload.reason) throw new Error('Укажите специалиста и основание исправления.');
     payload.tax_date ||= null; payload.settlement_id ||= null; payload.related_id ||= null;
-    await api(clientUrl(`/events/${encodeURIComponent(state.editingEvent.id)}`), { method: 'PATCH', body: JSON.stringify(payload) });
+    const changes = Object.fromEntries(['kind', 'tax_date', 'settlement_id', 'related_id', 'note'].filter(key => payload[key] !== (state.editingEvent[key] ?? (key === 'note' ? '' : null))).map(key => [key, payload[key]]));
+    if (!Object.keys(changes).length) throw new Error('В операции нет изменённых полей.');
+    try {
+      await api(clientUrl(`/events/${encodeURIComponent(state.editingEvent.id)}`), { method: 'PATCH', body: JSON.stringify({expected_version: state.editingEvent.version, changes, reviewer: payload.reviewer, reason: payload.reason}) });
+    } catch (error) {
+      if (error.status === 409 && error.current) {
+        const current = error.current; const box = clear('event-conflict'); box.hidden = false;
+        box.append(el('strong', '', 'Операцию уже изменили. Ваша правка ещё не сохранена.'));
+        const labels = {kind:'Тип',tax_date:'Дата дохода',settlement_id:'Выплата',related_id:'Связанная продажа',note:'Пояснение'};
+        for (const key of Object.keys(labels)) if (current[key] !== state.editingEvent[key] || Object.hasOwn(changes,key)) {
+          box.append(el('p', '', `${labels[key]}: сейчас «${current[key] ?? 'не указано'}»${Object.hasOwn(changes,key) ? `; ваша правка «${changes[key] ?? 'не указано'}»` : '; это поле вы не меняли'}.`));
+        }
+        const retry = el('button', 'button secondary', 'Сверено — перенести мою правку в новую версию'); retry.type = 'button';
+        retry.addEventListener('click', () => { state.editingEvent = current; for (const key of Object.keys(labels)) $('event-form').elements.namedItem(key).value = (Object.hasOwn(changes,key) ? changes[key] : current[key]) ?? ''; box.replaceChildren(el('p','','Правка подготовлена на новой версии. Проверьте форму и нажмите «Сохранить исправление».')); });
+        box.append(retry);
+      }
+      throw error;
+    }
     state.reviewer = payload.reviewer; $('reviewer-name').value = payload.reviewer;
+    await api(clientUrl('/calculate'), {method:'POST', body:JSON.stringify({period:state.period})});
     await loadWorkspace(); $('event-dialog').close();
-  }, 'Исправление сохранено с автором и основанием. Пересчитайте период.');
+  }, 'Исправление сохранено с автором и основанием. Черновик пересчитан.');
 });
 $('review-form').addEventListener('submit', (event) => {
   event.preventDefault(); const action = event.submitter?.value || 'review'; const result = state.workspace?.result; if (!result) return;

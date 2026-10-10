@@ -43,7 +43,10 @@
       if (!SOURCE_CODES.has(issue.code) && issue.code !== 'refund_sale_outside_year') return;
       const related = (issue.event_ids || []).map(eventId => eventMap.get(eventId)).filter(Boolean);
       let month = fallbackMonth;
-      if (related.length) {
+      // The monthly engine identifies the affected period. Related sources
+      // explain the issue, but an earlier sale must not backdate a refund error.
+      // Invalid events alone are emitted in every month and need date scoping.
+      if (issue.code === 'invalid_event' && related.length) {
         const relevant = related.map(event => relevantMonth(event, year)).filter(value => value !== null);
         if (!relevant.length) return;
         month = Math.min(...relevant);
@@ -88,7 +91,7 @@
     for (const event of events) {
       if (event.source === 'marketplace' && event.kind === 'return' && inYear(event.tax_date || event.date, year)) {
         const sale = saleIndex.get(event.related_id);
-        if (sale && validDate(sale.tax_date) && !inYear(sale.tax_date, year)) addIssue({ code: 'refund_sale_outside_year', severity: 'blocking', message: 'Возврат связан с продажей, признанной в другом налоговом году. Подтвердите год и основание уменьшения дохода.', event_ids: [event.id], sources: [source(event)] });
+        if (sale && validDate(sale.tax_date) && !inYear(sale.tax_date, year)) addIssue({ code: 'refund_sale_outside_year', severity: 'blocking', message: 'Возврат связан с продажей, признанной в другом налоговом году. Подтвердите год и основание уменьшения дохода.', event_ids: [event.id], sources: [source(event)] }, Number((event.tax_date || event.date).slice(5, 7)));
       }
       if (!inYear(event.date, year)) continue;
       let amount;

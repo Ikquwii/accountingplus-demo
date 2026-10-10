@@ -1,0 +1,62 @@
+[
+  {
+    "reportId": 9000001,
+    "dateFrom": "2026-09-01",
+    "dateTo": "2026-09-30",
+    "currency": "RUB",
+    "quantity": 1,
+    "rrdId": 900001,
+    "sellerOperName": "Продажа",
+    "docTypeName": "Продажа",
+    "rrDate": "2026-09-10",
+    "retailAmount": "1000.00",
+    "retailPriceWithDisc": "1000.00",
+    "ppvzSalesCommission": "100.00",
+    "forPay": "900.00",
+    "srid": "SYNTHETIC-ORDER-1",
+    "title": "SYNTHETIC — НЕ ПИЛОТ"
+  },
+  {
+    "reportId": 9000001,
+    "dateFrom": "2026-09-01",
+    "dateTo": "2026-09-30",
+    "currency": "RUB",
+    "quantity": 1,
+    "rrdId": 900002,
+    "sellerOperName": "Продажа",
+    "docTypeName": "Продажа",
+    "rrDate": "2026-09-11",
+    "retailAmount": "300.00",
+    "retailPriceWithDisc": "300.00",
+    "ppvzSalesCommission": "0.00",
+    "forPay": "300.00",
+    "srid": "SYNTHETIC-ORDER-2"
+  },
+  {
+    "reportId": 9000001,
+    "dateFrom": "2026-09-01",
+    "dateTo": "2026-09-30",
+    "currency": "RUB",
+    "quantity": 1,
+    "rrdId": 900003,
+    "sellerOperName": "Возврат",
+    "docTypeName": "Возврат",
+    "rrDate": "2026-09-15",
+    "retailAmount": "300.00",
+    "retailPriceWithDisc": "300.00",
+    "ppvzSalesCommission": "0.00",
+    "forPay": "300.00",
+    "srid": "SYNTHETIC-ORDER-2"
+  },
+  {
+    "reportId": 9000001,
+    "dateFrom": "2026-09-01",
+    "dateTo": "2026-09-30",
+    "currency": "RUB",
+    "quantity": 1,
+    "rrdId": 900004,
+    "sellerOperName": "Логистика",
+    "rrDate": "2026-09-20",
+    "deliveryService": "50.00"
+  }
+]
