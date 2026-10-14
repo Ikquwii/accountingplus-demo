@@ -114,6 +114,13 @@
   }
   function validateDatabase(value) {
     if (!plain(value) || value.schema !== 1 || !Array.isArray(value.workspaces) || !plain(value.originals) || value.workspaces.length > 100) throw new Error('Неподдерживаемый формат сохранённых данных.');
+    value.workspace_revision ??= 0;
+    if (!Number.isSafeInteger(value.workspace_revision) || value.workspace_revision < 0) throw new Error('Некорректная версия учебного кабинета.');
+    if (value.client_archive != null) {
+      const archive = value.client_archive;
+      if (!plain(archive) || typeof archive.id !== 'string' || !archive.id || typeof archive.created_at !== 'string' || !plain(archive.database) || archive.database.client_archive != null || !Array.isArray(archive.database.workspaces) || !archive.database.workspaces.length) throw new Error('Некорректный архив учебных селлеров.');
+      validateDatabase(archive.database);
+    }
     const clientIds = new Set();
     for (const workspace of value.workspaces) {
       if (!plain(workspace) || typeof workspace.client?.id !== 'string' || clientIds.has(workspace.client.id) || !Number.isSafeInteger(workspace.data_revision) || workspace.data_revision < 0) throw new Error('Некорректное рабочее место.');
@@ -236,7 +243,7 @@
     catch { throw new Error('Браузер запретил доступ к сохранённым данным. Разрешите хранение данных этого сайта и обновите страницу.'); }
   }
   function loadSaved(text) {
-    if (text === null) return clone(baseline);
+    if (text === null) return { schema: 1, workspaces: [], originals: {}, workspace_revision: 0 };
     try { return validateDatabase(JSON.parse(text)); }
     catch {
       const error = new Error('Сохранённые учебные данные повреждены или несовместимы. Они не удалены. Используйте «Сбросить учебные правки», чтобы восстановить примеры.');
@@ -256,6 +263,8 @@
   }
   function commit(candidate, expected) {
     if (storageRead() !== expected) throw new Error('Учебные данные изменились в другой вкладке. Обновите кабинет и повторите действие.');
+    candidate.workspace_revision = (database?.workspace_revision ?? 0) + 1;
+    if (!Number.isSafeInteger(candidate.workspace_revision)) throw new Error('Исчерпана версия учебного кабинета. Сохраните архив и обратитесь к разработчику.');
     validateDatabase(candidate);
     const serialized = JSON.stringify(candidate);
     try { localStorage.setItem(STORAGE_KEY, serialized); }
@@ -833,9 +842,17 @@
       const scenario = fixtures.scenarios.find(item => item.id === body.scenario);
       if (!scenario) throw new Error('Учебный пример не найден.');
       const original = baseline.workspaces.find(item => item.client.name === scenario.title);
+      if (!original) throw new Error('Исходный учебный пример не найден.');
       const existing = db.workspaces.find(item => item.client.id === original?.client.id);
-      if (!existing) throw new Error('Этот учебный пример отсутствует в сохранённых данных. Сбросьте учебные правки, чтобы восстановить примеры.');
-      return { client: existing.client, reused: true };
+      if (existing) return { client: existing.client, reused: true };
+      if (db.workspaces.length >= 100) throw new Error('В учебной версии допускается максимум 100 селлеров.');
+      const example = clone(original);
+      db.workspaces.push(example);
+      for (const file of example.files) {
+        if (!Object.hasOwn(baseline.originals, file.id)) throw new Error('Исходный документ учебного примера не найден.');
+        db.originals[file.id] = clone(baseline.originals[file.id]);
+      }
+      return { client: example.client, reused: false };
     }
     if (url.pathname === '/api/clients') {
       if (method === 'GET') return db.workspaces.map(workspace => workspace.client);
@@ -950,11 +967,56 @@
     const operation = queue.then(() => exclusiveStorage(() => {
       // A user-requested reset also recovers corrupt data, under the same lock.
       try { synchronize(); } catch (error) { if (error.code !== 'DEMO_STORAGE_CORRUPT') throw error; }
-      const expected = storageRead(); commit(clone(baseline), expected);
+      const expected = storageRead(), candidate = clone(baseline);
+      if (database?.client_archive) candidate.client_archive = clone(database.client_archive);
+      commit(candidate, expected);
       for (const value of blobUrls.values()) URL.revokeObjectURL(value); blobUrls.clear();
       ready = Promise.resolve(); return publicClone(database.workspaces.map(workspace => workspace.client));
     }));
     queue = operation.catch(() => {}); return operation;
   }
-  window.AccountingPlusDemo = { get ready() { return ready; }, request, fileUrl, templateUrl, exportBlob, reset };
+  function archiveStatus(db) {
+    const archive = db.client_archive;
+    return { revision: db.workspace_revision, client_count: db.workspaces.length,
+      archive: archive ? { id: archive.id, created_at: archive.created_at, client_count: archive.database.workspaces.length } : null };
+  }
+  async function workspaceStatus() { await ready; synchronize(); return archiveStatus(database); }
+  function assertWorkspaceRevision(db, expected) {
+    if (!Number.isSafeInteger(expected) || expected !== db.workspace_revision) {
+      const error = new Error('Учебный кабинет изменился в другой вкладке. Обновите список селлеров и повторите действие.');
+      error.status = 409; throw error;
+    }
+  }
+  async function changeArchive(body, restoring) {
+    await ready;
+    unknownFields(body, restoring ? ['expected_revision', 'archive_id'] : ['expected_revision'], 'Неизвестные поля действия с архивом.');
+    const operation = queue.then(() => exclusiveStorage(() => {
+      synchronize(); assertWorkspaceRevision(database, body.expected_revision);
+      const expected = persistedText, candidate = clone(database);
+      if (restoring) {
+        const archive = candidate.client_archive;
+        if (!archive || archive.id !== body.archive_id) { const error = new Error('Архив изменился или уже восстановлен. Обновите кабинет.'); error.status = 409; throw error; }
+        if (candidate.workspaces.length) throw new Error('Для восстановления кабинет должен быть пустым. Новые селлеры сохранены; восстановление не заменяет их.');
+        candidate.workspaces = archive.database.workspaces; candidate.originals = archive.database.originals;
+        delete candidate.client_archive;
+      } else {
+        if (candidate.client_archive) throw new Error('В кабинете уже есть невосстановленный архив. Новый архив его не заменит. Восстановите архив в пустом кабинете.');
+        if (!candidate.workspaces.length) throw new Error('Активных учебных селлеров нет; архивировать нечего.');
+        const archivedDatabase = clone(candidate); delete archivedDatabase.client_archive;
+        candidate.client_archive = { id: id(), created_at: now(), database: archivedDatabase };
+        candidate.workspaces = []; candidate.originals = {};
+      }
+      commit(candidate, expected);
+      for (const value of blobUrls.values()) URL.revokeObjectURL(value); blobUrls.clear();
+      return archiveStatus(database);
+    }));
+    queue = operation.catch(() => {}); return operation;
+  }
+  async function archiveBlob() {
+    await ready; synchronize();
+    if (!database.client_archive) throw new Error('Архив учебных селлеров не найден.');
+    return new Blob([JSON.stringify(database.client_archive)], { type: 'application/json;charset=utf-8' });
+  }
+  window.AccountingPlusDemo = { get ready() { return ready; }, request, fileUrl, templateUrl, exportBlob, reset, workspaceStatus,
+    archiveClients: body => changeArchive(body, false), restoreClients: body => changeArchive(body, true), archiveBlob };
 })();

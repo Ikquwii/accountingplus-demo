@@ -15,6 +15,7 @@ const resultLabels = { calculated: ['Рассчитано · черновик', 
 const reconciliationLabels = { matched: ['Сопоставлено', 'good'], partial: ['Частичная выплата', 'warning'], missing: ['Нет поступления', 'warning'], overpaid: ['Поступило больше', 'warning'], next_period: ['Поступление позже', 'neutral'], unlinked: ['Нет связи', 'warning'] };
 const historyLabels = { tax_profile_updated: 'Обновлены настройки года', finance_updated: 'Сохранена версия финансов', records_updated: 'Обновлены дополнительные операции', assessment_approved: 'Утверждено начисление', client_created: 'Создан профиль', profile_updated: 'Изменён профиль', file_imported: 'Загружен файл', file_failed: 'Ошибка загрузки', file_replaced: 'Заменён файл', event_updated: 'Исправлена операция', calculated: 'Рассчитан период', result_calculated: 'Рассчитан период', result_created: 'Сохранён расчёт', review: 'Проверено бухгалтером', approve: 'Утверждён черновик', reviewed: 'Проверено бухгалтером', approved: 'Утверждён черновик', result_reviewed: 'Проверено бухгалтером', result_approved: 'Утверждён черновик' };
 const $ = (id) => document.getElementById(id);
+let teachingStatus = null;
 
 function el(tag, className, content) {
   const node = document.createElement(tag);
@@ -71,6 +72,51 @@ function updateControls() {
     $('upload-source').disabled = true; $('upload-replacement').disabled = true; $('upload-file').disabled = true; $('upload-confirm').disabled = true;
   }
   window.AccountingPlusFinance?.setBusy(state.busy);
+  updateTeachingButtons();
+}
+function updateTeachingButtons() {
+  if (!$('archive-teaching-clients')) return;
+  $('archive-teaching-clients').disabled = state.busy || !teachingStatus?.client_count || Boolean(teachingStatus.archive);
+  $('restore-teaching-clients').disabled = state.busy || !teachingStatus?.archive || teachingStatus.client_count > 0;
+  $('download-teaching-archive').disabled = state.busy || !teachingStatus?.archive;
+}
+async function updateTeachingStatus() {
+  if (!window.AccountingPlusDemo || !$('teaching-archive-status')) return;
+  teachingStatus = await window.AccountingPlusDemo.workspaceStatus();
+  const archive = teachingStatus.archive;
+  $('teaching-archive-status').textContent = archive
+    ? `В кабинете: ${teachingStatus.client_count} · В архиве: ${archive.client_count}. История, расчёты и исходные документы сохранены.${teachingStatus.client_count ? ' Восстановление доступно только в пустом кабинете; новые селлеры не заменяются.' : ''}`
+    : `В кабинете: ${teachingStatus.client_count}. Архив сохранит все учебные профили, документы, расчёты и историю в этом браузере.`;
+  updateTeachingButtons();
+}
+function mountTeachingArchive() {
+  if (!window.AccountingPlusDemo) return;
+  if ($('reset-demo')) $('reset-demo').hidden = true;
+  $('client-select').labels[0].textContent = 'Учебный селлер';
+  $('new-client').textContent = '+ Новый учебный селлер';
+  const panel = el('section', 'panel'); panel.setAttribute('aria-label', 'Учебные наборы');
+  const status = el('p', 'micro'); status.id = 'teaching-archive-status'; status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+  const actions = el('div', 'form-actions');
+  for (const [id, label] of [['archive-teaching-clients', 'Убрать все учебные наборы в архив'], ['restore-teaching-clients', 'Восстановить архив'], ['download-teaching-archive', 'Скачать копию архива']]) {
+    const button = el('button', 'button secondary', label); button.type = 'button'; button.id = id; button.disabled = true; actions.append(button);
+  }
+  panel.append(status, actions); document.querySelector('.workspace-controls').insertAdjacentElement('afterend', panel);
+  $('archive-teaching-clients').addEventListener('click', () => task(async () => {
+    if (window.AccountingPlusFinance?.hasUnsaved() || window.AccountingPlusRecords?.hasUnsaved()) throw new Error('Сначала сохраните или отмените введённые изменения в финансах и реестре. Архив сохраняет записанные данные.');
+    await window.AccountingPlusDemo.archiveClients({ expected_revision: teachingStatus.revision });
+    state.clientId = ''; state.clients = []; state.workspace = null; state.annual = null; state.assistantContext = null;
+    $('assistant-answer').hidden = true; history.replaceState(null, '', location.pathname + location.search);
+    showView('overview'); render();
+  }, 'Кабинет пуст. Все учебные наборы сохранены в архиве и доступны для восстановления.'));
+  $('restore-teaching-clients').addEventListener('click', () => task(async () => {
+    await window.AccountingPlusDemo.restoreClients({ expected_revision: teachingStatus.revision, archive_id: teachingStatus.archive?.id });
+    state.clients = await api('/api/clients'); await chooseClient(state.clients[0]); showView('overview');
+  }, 'Учебные наборы восстановлены вместе с документами, расчётами и историей.'));
+  $('download-teaching-archive').addEventListener('click', () => task(async () => {
+    const blob = await window.AccountingPlusDemo.archiveBlob(), url = URL.createObjectURL(blob);
+    const link = el('a'); link.href = url; link.download = `accountingplus-teaching-archive-${teachingStatus.archive.created_at.slice(0,10)}.json`;
+    document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, 'Полная копия учебного архива скачана.'));
 }
 function applySession(info) {
   state.authRequired = Boolean(info.auth_required); state.user = info.user || null; state.csrfToken = info.csrf_token || '';
@@ -115,7 +161,13 @@ async function task(work, success) {
   state.busy = true; updateControls();
   try { await work(); if (success) notify(success); }
   catch (error) { notify(error.message || 'Не удалось выполнить действие.', true); }
-  finally { state.busy = false; updateControls(); }
+  finally {
+    if (window.AccountingPlusDemo) {
+      try { await updateTeachingStatus(); }
+      catch (error) { notify(error.message, true); if ($('reset-demo')) $('reset-demo').hidden = false; }
+    }
+    state.busy = false; updateControls();
+  }
 }
 function clientUrl(suffix = '') { return `/api/clients/${encodeURIComponent(state.clientId)}${suffix}`; }
 function fileUrl(fileId) {
@@ -167,7 +219,7 @@ function isLegacyDemo(client) {
 }
 function renderClients() {
   const select = clear('client-select');
-  if (!state.clients.length) { const option = el('option', '', 'Нет выбранного клиента'); option.value = ''; select.append(option); }
+  if (!state.clients.length) { const option = el('option', '', window.AccountingPlusDemo ? 'Учебных селлеров пока нет' : 'Нет выбранного клиента'); option.value = ''; select.append(option); }
   const legacy = state.clients.filter(client => isLegacyDemo(client));
   $('toggle-legacy').hidden = !legacy.length;
   $('toggle-legacy').textContent = `${state.showLegacy ? 'Скрыть' : 'Показать'} старые учебные копии (${legacy.length})`;
@@ -378,7 +430,7 @@ function render() {
     $('result-status').textContent = label[0]; $('result-status').className = `badge ${label[1]}`;
     $('client-content').classList.toggle('stale-result', result?.status === 'stale');
     renderWorkflow(); renderMonthlyProfit(); renderNextStep(result); renderFlags(); renderMetrics(); renderTaxSummary(); renderFiles(); renderEvents(); renderReconciliation(); renderIssues(); renderHistory();
-  }
+  } else $('period-note').textContent = window.AccountingPlusDemo ? 'Создайте учебного селлера или выберите пример. Наборы появляются только по вашему действию.' : 'Для начала выберите учебный набор или создайте клиента.';
   window.AccountingPlusFinance?.render();
   showView(state.view); updateControls();
 }
@@ -614,7 +666,9 @@ $('logout-button').addEventListener('click', () => task(async () => {
 }));
 $('refresh-button').addEventListener('click', () => task(async () => {
   state.clients = await api('/api/clients');
-  if (state.clientId) await loadWorkspace(); else if (state.clients.length) await chooseClient(state.clients[0]); else render();
+  if (state.clients.some(client => client.id === state.clientId)) await loadWorkspace();
+  else if (state.clients.length) await chooseClient(state.clients[0]);
+  else { state.clientId = ''; state.workspace = null; state.annual = null; history.replaceState(null, '', location.pathname + location.search); render(); }
 }, window.AccountingPlusDemo ? 'Показаны данные, сохранённые в этом браузере.' : 'Данные обновлены. Показаны последние изменения команды.'));
 async function initialize() {
   await task(async () => {
@@ -638,4 +692,5 @@ $('tax-details').addEventListener('click',()=>{
   try{window.AccountingPlusFinance.selectPeriod(state.period);showView('finance');}
   catch(error){notify(error.message,true);}
 });
+mountTeachingArchive();
 initialize();

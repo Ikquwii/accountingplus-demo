@@ -79,6 +79,7 @@
     if(!data||!contextKey)return;const values={};$('finance-form').querySelectorAll('input,select,textarea').forEach(input=>{values[input.id]=input.type==='checkbox'?input.checked:input.value;});
     caches.set(contextKey,{data,values,dirty,payments:clone(draftPayments)});
   }
+  function hasUnsaved(){return dirty||[...caches.values()].some(draft=>draft.dirty);}
   function restoreValues(values){for(const[id,value]of Object.entries(values||{})){const input=$(id);if(!input)continue;if(input.type==='checkbox')input.checked=Boolean(value);else input.value=value??'';}}
   async function load(force=false){
     if(!active||!hooks)return;const clientId=state().clientId;const nextKey=key(),nextSource=sourceKey();
@@ -268,5 +269,5 @@
     }
     const url=URL.createObjectURL(new Blob([content],{type})),link=document.createElement('a');link.href=url;link.download=`accountingplus-finance-${year}-draft.${extension}`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.AccountingPlusFinance={mount,render,setBusy,activate,periodForMonth,overviewSummary,selectPeriod};
+  window.AccountingPlusFinance={mount,render,setBusy,activate,periodForMonth,overviewSummary,selectPeriod,hasUnsaved};
 })();
