@@ -91,5 +91,5 @@
       catch(e){error(e.message);throw e;}
     },'Реестр сохранён. Накопительные суммы пересчитаны из документов и дополнительных операций.');
   }
-  window.AccountingPlusRecords={mount,load,setBusy(value){busy=value;if(root)update();}};
+  window.AccountingPlusRecords={mount,load,hasUnsaved:()=>dirty,setBusy(value){busy=value;if(root)update();}};
 })();

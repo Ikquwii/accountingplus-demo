@@ -368,4 +368,12 @@
 .calculation-breakdown { margin:0; }
 .calculation-breakdown dt, .calculation-breakdown dd { min-width:0; margin:0; overflow-wrap:anywhere; }
 .calculation-breakdown dd { text-align:right; }
+#tax-summary { margin-bottom:18px; }
+#tax-summary > div:first-child { min-width:0; flex:1; }
+#tax-summary > div:last-child { min-width:190px; }
+#tax-summary .tax-amount { font-size:36px; font-weight:650; white-space:nowrap; }
+#tax-summary .button { margin-top:14px; }
+#tax-summary.tax-incomplete .tax-amount { font-size:24px; white-space:normal; }
+#tax-status { display:block; margin-top:6px; }
+@media(max-width:540px) { #tax-summary > div:last-child { min-width:0; width:100%; } #tax-summary .tax-amount { font-size:30px; } }
 @media(max-width:600px) { .workflow-steps { width:100%; } .workflow-steps .button { flex:1; padding:10px 7px; font-size:12px; } }

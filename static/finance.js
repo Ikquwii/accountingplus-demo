@@ -22,6 +22,27 @@
   const cents=value=>{if(value==null)return null;const match=String(value).match(/^(-?)(\d+)(?:\.(\d{1,2}))?$/);return match?BigInt(match[1]+'1')*(BigInt(match[2])*100n+BigInt((match[3]||'').padEnd(2,'0'))):null;};
   const sum=(a,b)=>{const x=cents(a),y=cents(b);if(x===null||y===null)return null;const total=x+y,absolute=total<0n?-total:total;return `${total<0n?'-':''}${absolute/100n}.${String(absolute%100n).padStart(2,'0')}`;};
   const hasPositive=value=>{const amount=cents(value);return amount!==null&&amount>0n;};
+  function periodForMonth(month){
+    const match=/^(\d{4})-(0[1-9]|1[0-2])$/.exec(String(month));
+    if(!match||Number(match[1])<2000||Number(match[1])>2099)return null;
+    return {...PERIODS[Math.ceil(Number(match[2])/3)-1],year:Number(match[1])};
+  }
+  function overviewSummary(annual,month){
+    const selected=periodForMonth(month);
+    const result=selected&&annual?.year===selected.year?annual.result?.periods?.find(row=>row.period===selected.id):null;
+    const questions=(result?.issues||[]).filter(issue=>issue.severity==='blocking');
+    const ready=result?.ready===true&&!questions.length&&cents(result.advance_to_pay)!==null;
+    return {period:selected,ready,amount:ready?result.advance_to_pay:null,
+      decrease:ready&&hasPositive(result.advance_to_decrease)?result.advance_to_decrease:null,
+      reasons:[...new Set(questions.map(issue=>issue.message).filter(Boolean))],
+      unavailable:!result};
+  }
+  function selectPeriod(month){
+    const selected=periodForMonth(month);if(!selected)throw new Error('Выберите корректный месяц для налогового расчёта.');
+    if(year!==selected.year&&(dirty||window.AccountingPlusRecords?.hasUnsaved()))throw new Error('Сначала сохраните или отмените изменения в «Финансах», затем откройте налог другого года.');
+    capture();year=selected.year;period=selected.id;
+    $('finance-year').value=year;$('finance-period').value=period;
+  }
   function control(id,label,type='text',value='',options={}){
     const attrs=options.attrs||'';const help=options.help?`<p class="finance-field-help">${esc(options.help)}</p>`:'';
     const input=type==='textarea'?`<textarea id="${id}" ${attrs}>${esc(value)}</textarea>`:`<input id="${id}" type="${type}" value="${esc(value)}" ${attrs}>`;
@@ -247,5 +268,5 @@
     }
     const url=URL.createObjectURL(new Blob([content],{type})),link=document.createElement('a');link.href=url;link.download=`accountingplus-finance-${year}-draft.${extension}`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.AccountingPlusFinance={mount,render,setBusy,activate};
+  window.AccountingPlusFinance={mount,render,setBusy,activate,periodForMonth,overviewSummary,selectPeriod};
 })();

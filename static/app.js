@@ -53,6 +53,7 @@ function updateControls() {
   $('client-select').disabled = state.busy || !state.clients.length;
   $('period-select').disabled = state.busy || !hasClient;
   $('edit-profile').disabled = state.busy || !hasClient;
+  $('tax-details').disabled = state.busy || !hasClient;
   $('calculate').disabled = state.busy || !hasClient;
   $('assistant-submit').disabled = state.busy || !hasClient;
   const result = state.workspace?.result;
@@ -215,9 +216,6 @@ function renderMetrics() {
     ['Расхождение подтверждённых выплат', state.workspace.events.some(event=>event.kind==='payout'&&event.date?.startsWith(state.period)) ? metrics.payout_difference : null, 'Без документа о выплате расхождение не определено']
   ];
   cards.forEach(([label, amount, note], index) => { const card = el('div', `metric-card${index === 3 && amount !== '0.00' ? ' difference' : ''}`); card.append(el('div', 'metric-label', label), el('strong', 'metric-value', money(amount, 'Недостаточно данных')), el('p', 'micro', note)); node.append(card); });
-  const expenses = state.workspace.client.tax_regime === 'income_expenses';
-  $('tax-amount').textContent = 'В разделе «Финансы»';
-  $('tax-description').textContent = expenses ? 'УСН «Доходы минус расходы»: подтвердите расходы в разделе «Финансы». Там рассчитываются взносы, накопительные авансы и годовой минимальный налог.' : 'Месяц показывает продажи и движение денег. Налог и взносы рассчитываются с начала года по отдельному профилю в разделе «Финансы».';
   const breakdown = clear('calculation-breakdown');
   [['Продажи', 'sales'], ['Возвраты', 'returns'], ['Комиссия маркетплейса', 'commission'], ['Логистика', 'logistics'], ['Прочие удержания', 'withholding'], ['Заявленные выплаты', 'declared_payouts'], ['Остаток расчётов с маркетплейсом', 'closing_balance']].forEach(([label, key]) => { const row = el('div', 'breakdown-row'); row.append(el('dt', '', label), el('dd', '', money(metrics[key], 'Недостаточно данных'))); breakdown.append(row); });
   $('rules-label').textContent = `Правила ${result.rules_version || '—'} · версия ${result.version}`;
@@ -327,6 +325,22 @@ function exactMoneySum(values) {
   let total=0n;for(const value of values){if(value==null)return null;const match=String(value).match(/^(-?)(\d+)(?:\.(\d{1,2}))?$/);if(!match)return null;total+=(match[1]?-1n:1n)*(BigInt(match[2])*100n+BigInt((match[3]||'').padEnd(2,'0')));}
   const absolute=total<0n?-total:total;return `${total<0n?'-':''}${absolute/100n}.${String(absolute%100n).padStart(2,'0')}`;
 }
+function renderTaxSummary(){
+  const summary=window.AccountingPlusFinance.overviewSummary(state.annual,state.period);
+  const selected=summary.period;
+  $('tax-period').textContent=selected?`${selected.label} ${selected.year} · ${selected.range}`:'Выберите месяц';
+  $('tax-amount').textContent=money(summary.amount,'Нужно уточнить');
+  $('tax-summary').classList.toggle('tax-incomplete',!summary.ready);
+  $('tax-status').textContent=summary.ready?'Расчётный черновик':'Сумма пока не подтверждена';
+  $('tax-description').textContent=summary.ready
+    ?'Накопительный расчёт после учёта взносов и ранее начисленных авансов. Внесённые оплаты и собственные взносы ИП — в деталях.'
+    :summary.unavailable?'Годовой расчёт недоступен. Откройте «Финансы», чтобы проверить данные и повторить загрузку.'
+      :summary.reasons.slice(0,2).join(' ')||'Подтвердите доходы с начала года, налоговые настройки и правило учёта взносов.';
+  $('tax-decrease').hidden=!summary.decrease;
+  $('tax-decrease').textContent=summary.decrease?`К уменьшению ранее начисленного УСН: ${money(summary.decrease)}.`:'';
+  $('tax-details').textContent=summary.ready?'Посмотреть расчёт и оплаты':'Уточнить данные для налога';
+  $('tax-details').disabled=state.busy;
+}
 function renderMonthlyProfit(){
   const node=clear('monthly-profit'),month=state.annual?.monthly?.find(row=>row.month===state.period);
   node.append(el('h2','','Продажи и прибыль месяца'));
@@ -363,7 +377,7 @@ function render() {
     $('period-note').textContent = 'Выбор месяца меняет только просмотр. Сохранённые сведения и утверждённые версии остаются в истории.';
     $('result-status').textContent = label[0]; $('result-status').className = `badge ${label[1]}`;
     $('client-content').classList.toggle('stale-result', result?.status === 'stale');
-    renderWorkflow(); renderMonthlyProfit(); renderNextStep(result); renderFlags(); renderMetrics(); renderFiles(); renderEvents(); renderReconciliation(); renderIssues(); renderHistory();
+    renderWorkflow(); renderMonthlyProfit(); renderNextStep(result); renderFlags(); renderMetrics(); renderTaxSummary(); renderFiles(); renderEvents(); renderReconciliation(); renderIssues(); renderHistory();
   }
   window.AccountingPlusFinance?.render();
   showView(state.view); updateControls();
@@ -618,5 +632,10 @@ async function initialize() {
 window.AccountingPlusFinance?.mount({ api, task, getState: () => state,
   refresh: async () => { state.clients = await api('/api/clients'); await loadWorkspace(); },
   chooseClient: async client => { state.clients = await api('/api/clients'); await chooseClient(client); showView('finance'); }
+});
+$('tax-details').addEventListener('click',()=>{
+  if(state.busy)return;
+  try{window.AccountingPlusFinance.selectPeriod(state.period);showView('finance');}
+  catch(error){notify(error.message,true);}
 });
 initialize();

@@ -9,18 +9,18 @@
   <meta name="theme-color" content="#4f46e5">
   <title>accountingPLUS — учебный кабинет</title>
   <link rel="icon" href="./static/favicon.svg?v=20261008-breeze" type="image/svg+xml">
-  <link rel="stylesheet" href="./static/app.css?v=560045b9055d">
+  <link rel="stylesheet" href="./static/app.css?v=a9f10552b02a">
   <link rel="stylesheet" href="./static/team.css?v=f35d1378bdee">
   <link rel="stylesheet" href="./static/demo.css?v=e5a3d23f5204">
   <link rel="stylesheet" href="./static/finance.css?v=cfdcdf41469e">
-  <script src="./static/records.js?v=76659b574555" defer></script>
+  <script src="./static/records.js?v=9bb49b63d86d" defer></script>
   <script src="./static/engine.js?v=23183159734d" defer></script>
   <script src="./static/fiscal.js?v=3f6390163c4d" defer></script>
   <script src="./static/finance-data.js?v=fa86c279236c" defer></script>
   <script src="./static/document-adapters.js?v=684fedd04fe7" defer></script>
   <script src="./static/runtime.js?v=a74f84a72443" defer></script>
-  <script src="./static/finance.js?v=9541906ecb29" defer></script>
-  <script src="./static/app.js?v=adbe714f8f5f" defer></script>
+  <script src="./static/finance.js?v=494f05e89071" defer></script>
+  <script src="./static/app.js?v=4ff5d4b936bb" defer></script>
   <script src="./static/demo-ui.js?v=85d808cb87db" defer></script>
 </head>
 <body>
@@ -76,10 +76,10 @@
             <div class="workflow-panel"><div><strong id="workflow-state"></strong><p id="workflow-next" class="micro"></p></div><nav class="workflow-steps" aria-label="Закрытие месяца"><button class="button secondary" data-go="documents">1 · Документы</button><button class="button secondary" data-go="review">2 · Вопросы</button><button class="button secondary" data-go="overview">3 · Результат</button></nav></div><div id="profile-flags" class="notice-stack"></div>
             <section id="finance-section" data-section="finance" class="view-section" hidden></section>
             <section data-section="overview" class="view-section">
-              <div id="monthly-profit" class="panel"></div><h2 class="result-group-title">Деньги и налоговый доход</h2><div id="metrics" class="metric-grid"></div>
+              <section id="tax-summary" class="panel tax-panel" aria-labelledby="tax-heading"><div><span id="tax-period" class="tax-label"></span><h2 id="tax-heading">Налог УСН к доплате</h2><p id="tax-description"></p><p id="tax-decrease" hidden></p><button id="tax-details" class="button secondary" type="button">Посмотреть расчёт и оплаты</button></div><div><strong id="tax-amount" class="tax-amount"></strong><span id="tax-status" class="micro"></span></div></section><div id="monthly-profit" class="panel"></div><h2 class="result-group-title">Деньги и налоговый доход</h2><div id="metrics" class="metric-grid"></div>
               <div id="no-result" class="panel empty-panel" hidden><h2>Документы готовы к работе</h2><p>Загрузите отчёт маркетплейса и выписку банка, затем рассчитайте период. Приложение сохранит результат отдельной версией.</p><button class="button secondary" data-go="documents">Перейти к документам</button></div>
               <div id="calculation-content" hidden><div class="next-step"><div><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h14V4h-4M9 3h6v4H9zM9 12l2 2 4-4"/></svg><div><strong id="next-step-title">Следующий шаг — проверить черновик</strong><p id="next-step-description">Сопоставьте суммы с источниками и ответьте на вопросы расчёта.</p></div></div><button class="button secondary" id="next-step-action" data-go="review">К проверке <span aria-hidden="true">→</span></button></div>
-                <div class="panel tax-panel"><div><span class="tax-label">Налоги и взносы</span><h2>Налог за накопительный период</h2><p id="tax-description"></p></div><div><strong id="tax-amount" class="tax-amount"></strong><span class="micro">до уменьшений</span></div></div>
+
                 <div class="two-column"><div class="panel"><div class="panel-heading"><h2>Состав расчёта</h2><span class="micro">рубли</span></div><dl id="calculation-breakdown" class="breakdown"></dl></div><div class="panel"><div class="panel-heading"><h2>Что требует внимания</h2><button class="text-button" data-go="review">Все вопросы →</button></div><div id="issue-summary"></div></div></div>
                 <div class="panel"><div class="panel-heading"><h2>Пояснение к черновику</h2><span id="rules-label" class="micro"></span></div><div id="calculation-explanation" class="plain-explanation"></div><details class="format-help"><summary>Из каких строк получен доход для УСН</summary><div id="income-table"></div></details></div>
               </div>
